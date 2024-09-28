@@ -1,0 +1,24 @@
+[package]
+name = "stardust"
+version = "0.1.0"
+edition = "2021"
+authors = ["Irate-Walrus"]
+
+#[profile.dev]
+#panic = "abort"
+#opt-level = "z"
+#codegen-units = 1
+#strip = true
+#
+## See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+#[profile.release]
+#opt-level = "z"   # Optimize for size.
+#lto = true        # Enable Link Time Optimization, without this "HELLO HEAP" will segfault
+#codegen-units = 1 # Reduce number of codegen units to increase optimizations.
+#panic = "abort"   # Abort on panic
+
+[dependencies]
+syscalls = { version = "0.6.18", default-features = false, features = [
+    "x86_64",
+] }
+compiler_builtins = { version = "0.1.126", features = ["mem"] }

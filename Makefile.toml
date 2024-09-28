@@ -1,0 +1,95 @@
+[config]
+skip_core_tasks = true
+default_to_workspace = false
+
+[env]
+TARGET = "x86_64-unknown-linux-gnu"
+STARDUST_PIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C lto=true -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--no-gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pie -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/linker.ld"
+STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--no-gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pie -C link-arg=-Wl,-e_start"
+#"-C",
+#"link-arg=-fpack-structs=8",
+
+[tasks.default]
+description = "Default task that builds the project."
+dependencies = ["build"]
+
+[tasks.build]
+description = "Clean, build stardust, build runner."
+dependencies = ["clean", "build-stardust-pic", "objcopy", "build-runner"]
+
+[tasks.run]
+description = "Run startdust as PIC"
+dependencies = ["build"]
+command = "./target/${TARGET}/debug/runner"
+
+[tasks.build-stardust-pic]
+description = "Build stardust."
+command = "cargo"
+args = ["build", "--package=stardust", "--release", "--target", "${TARGET}"]
+env = { "RUSTFLAGS" = "${STARDUST_PIC_RUSTFLAGS}" }
+
+[tasks.build-nopic]
+description = "Clean, build stardust, build runner."
+dependencies = ["clean", "build-stardust-nopic"]
+
+[tasks.build-stardust-nopic]
+description = "Build stardust."
+command = "cargo"
+args = ["build", "--package=stardust", "--target", "${TARGET}"]
+env = { "RUSTFLAGS" = "${STARDUST_NOPIC_RUSTFLAGS}" }
+
+[tasks.run-nopic]
+description = "Run startdust as PIC"
+dependencies = ["build-nopic"]
+command = "./target/${TARGET}/debug/stardust"
+
+[tasks.build-runner]
+description = "Build runner."
+command = "cargo"
+args = ["build", "--package=runner", "--target", "${TARGET}"]
+env = { "RUSTFLAGS" = "" }
+
+[tasks.clean]
+description = "Cleans the project."
+script = ["cargo clean", "rm -f ./target"]
+
+[tasks.objcopy]
+description = "Copy .text section of the binary to stardust.bin."
+command = "objcopy"
+args = [
+    "-O",
+    "binary",
+    "-j",
+    ".text",
+    "target/${TARGET}/release/stardust",
+    "target/stardust.bin",
+]
+
+[tasks.objdump]
+description = "Dumps stardust to stdout using objdump."
+command = "objdump"
+args = [
+    "-dzrWC",
+    "-mi386",
+    "-Mx86-64",
+    "-Mintel",
+    "-j",
+    ".text",
+    "-z",
+    "target/${TARGET}/release/stardust",
+]
+
+[tasks.debug]
+description = "Debug stardust pic."
+command = "rust-gdb"
+args = ["target/${TARGET}/debug/runner"]
+
+[tasks.r2-bin]
+description = "Analyze stardust bin w/ r2."
+command = "r2"
+args = ["-AA", "target/stardust.bin"]
+
+[tasks.r2]
+description = "Analyze stardust bin w/ r2."
+command = "r2"
+args = ["-e bin.relocs.apply=true", "-AA", "target/${TARGET}/release/stardust"]
