@@ -17,6 +17,7 @@ SECTIONS
         *(.text.strlen)
 
         *(.text._*)            /* rust auto-generated helpers/junk */
+        *(.text..Lanon*)       /* rust auto-generated helpers/junk */
         *(.text.unlikely*)     /* unlikely executed functions, related to compiler optimization */
 
 
