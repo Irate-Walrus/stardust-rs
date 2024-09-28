@@ -32,11 +32,15 @@ Using `alloc` appears to work but functionality that requires `compilier_builtin
 Will result in a seg fault, an example of this is the `format!` macro. This seg fault appears to be the result of a failed `test rdx, rdx` within `core::fmt::write::hbd7fc918960f6ce7` resulting in a call to the `_gcc_except_table` which has been removed by [linker.ld](./stardust/linker.ld).
 
 
-Offending dissassembly in `radare2` see `0x00001525` for seg fault: 
+Offending dissassembly in `radare2` see `0x00001525` for seg fault:
 
 ![seg fault in `core::fmt::write::hbd7fc918960f6ce7`](./docs/segfault-in-core-fmt.png)
-
 
 Seg fault as observed in `GDB`:
 
 ![GDB seg fault](./docs/gdb-debug-segfault.png)
+
+If I debug the elf without the linker script you can see that this is a result of a failed null ptr check within `if !piece.is_empty()`:
+
+![failed null ptr check](./docs/piece-is-empty.raw.png)
+
