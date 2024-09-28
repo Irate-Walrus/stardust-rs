@@ -40,7 +40,51 @@ Seg fault as observed in `GDB`:
 
 ![GDB seg fault](./docs/gdb-debug-segfault.png)
 
-If I debug the elf without the linker script you can see that this is a result of a failed null ptr check within `if !piece.is_empty()`:
+If I debug the elf without the linker script you can see that this is a result of a failed check within `if !piece.is_empty()`:
 
-![failed null ptr check](./docs/piece-is-empty.raw.png)
+![failed `is_empty()` check](./docs/piece-is-empty.raw.png)
 
+This check is within the following code
+@ [https://github.com/rust-lang/rust/blob/master/library/core/src/fmt/mod.rs](https://github.com/rust-lang/rust/blob/150247c338a54cb3d08614d8530d1bb491fa90db/library/core/src/fmt/mod.rs#L1172C1-L1190C10):
+
+```rust
+/* core::fmt::write () at core/src/fmt/mod.rs:1179 */
+/* 1172 */ match args.fmt {
+/* 1173 */     None => {
+/* 1174 */         // We can use default formatting parameters for all arguments.
+/* 1175 */         for (i, arg) in args.args.iter().enumerate() {
+/* 1176 */             // SAFETY: args.args and args.pieces come from the same Arguments,
+/* 1177 */             // which guarantees the indexes are always within bounds.
+/* 1178 */             let piece = unsafe { args.pieces.get_unchecked(i) };
+/* 1179 */             if !piece.is_empty() { // This is the check currently failing
+/* 1180 */                 formatter.buf.write_str(*piece)?;
+/* 1181 */             }
+/* 1182 */
+/* 1183 */             // SAFETY: There are no formatting parameters and hence no
+/* 1184 */             // count arguments.
+/* 1185 */             unsafe {
+/* 1186 */                 arg.fmt(&mut formatter)?;
+/* 1187 */             }
+/* 1188 */             idx += 1;
+/* 1189 */         }
+/* 1190 */     }
+```
+
+According to strace the `mmap` made to allocate the string `pic`/`nopic` is identical:
+
+```
+write(1, "[+] Hello Stardust\n", 19[+] Hello Stardust
+)    = 19
+mmap(NULL, 58, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fcc8060f000
+--- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0xe30} ---
+```
+
+VS
+
+```
+write(1, "[+] Hello Stardust\n", 19[+] Hello Stardust
+)    = 19
+mmap(NULL, 58, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f199cd9e000
+write(1, "[*] Stardust Start Address:\t0x21"..., 37[*] Stardust Start Address:  0x21e7e0
+) = 37
+```
