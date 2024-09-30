@@ -40,7 +40,7 @@ Seg fault as observed in `GDB`:
 
 ![GDB seg fault](./docs/gdb-debug-segfault.png)
 
-If I debug the elf without the linker script you can see that this is a result of a failed check within `if !piece.is_empty()`:
+If you debug the elf without the linker script you can see that this is a result of a failed check within `if !piece.is_empty()`:
 
 ![failed `is_empty()` check](./docs/piece-is-empty.raw.png)
 
@@ -70,7 +70,11 @@ This check is within the following code
 /* 1190 */     }
 ```
 
-According to strace the `mmap` made to allocate the string `pic`/`nopic` is identical:
+According to strace the `mmap` made to allocate the string `PIC`/`NOPIC` is identical:
+
+`PIC`
+
+---
 
 ```
 write(1, "[+] Hello Stardust\n", 19[+] Hello Stardust
@@ -79,7 +83,9 @@ mmap(NULL, 58, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7fcc8
 --- SIGSEGV {si_signo=SIGSEGV, si_code=SEGV_MAPERR, si_addr=0xe30} ---
 ```
 
-VS
+`NOPIC`
+
+---
 
 ```
 write(1, "[+] Hello Stardust\n", 19[+] Hello Stardust
@@ -88,3 +94,42 @@ mmap(NULL, 58, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f199
 write(1, "[*] Stardust Start Address:\t0x21"..., 37[*] Stardust Start Address:  0x21e7e0
 ) = 37
 ```
+
+Following the hypothesis that this is a result of a failing `if !piece.is_empty()` the difference between `PIC`/`NOPIC` is apparent:
+
+`PIC`
+
+---
+
+![PIC bad &str references](./docs/pic-bad-string-refs.png)
+
+`NOPIC`
+
+---
+
+
+![NOPIC &str references](./docs/nopic-string-refs.png)
+
+Furthering my hypothesis with `radare2`:
+
+`PIC`
+
+---
+
+![PIC start str address](./docs/pic-start-str-ref.png)
+
+![PIC radare2 start str address](./docs/pic-radare2-start-str-ref.png)
+
+> Observe these addresses are different
+
+`NOPIC`
+
+---
+
+![NOPIC start str address](./docs/nopic-start-str-ref.png)
+
+![NOPIC radare2 start str address](./docs/nopic-radare2-start-str-ref.png)
+
+> While these addresses are identical.
+
+
