@@ -22,6 +22,11 @@ Following is the desired output and current output of `cargo make run-nopic`
 [*] Stardust Length:            53
 ```
 
+## Problem #1 - core::fmt Segmentation Fault
+
+
+### Diagnosis
+
 Using `alloc` appears to work but functionality that requires `compilier_builtins`, e.g. the following functions:
 - `memcpy`
 - `memmove`
@@ -30,7 +35,6 @@ Using `alloc` appears to work but functionality that requires `compilier_builtin
 - `bcmp`
 
 Will result in a seg fault, an example of this is the `format!` macro. This seg fault appears to be the result of a failed `test rdx, rdx` within `core::fmt::write::hbd7fc918960f6ce7` resulting in a call to the `_gcc_except_table` which has been removed by [linker.ld](./stardust/linker.ld).
-
 
 Offending dissassembly in `radare2` see `0x00001525` for seg fault:
 
@@ -133,3 +137,28 @@ Furthering my hypothesis with `radare2`:
 > While these addresses are identical.
 
 
+### Issue
+
+The compiler is using absolute addresses to reference the `pieces` in `Arguments { pieces, fmt: None, args }` passed to `alloc::fmt::format::h6658b5a814ad0151` due to the use of the `alloc::format!` macro:
+
+The two absolute address the `PIC` is trying to access are:
+- `0x7956`
+- `0x7972`
+
+```
+[0x00000780]>  px 28 @ 0x7956
+- offset -  5657 5859 5A5B 5C5D 5E5F 6061 6263 6465  6789ABCDEF012345
+0x00007956  5b2a 5d20 5374 6172 6475 7374 2053 7461  [*] Stardust Sta
+0x00007966  7274 2041 6464 7265 7373 3a09            rt Address:.
+```
+
+```
+[0x00000780]>  px 26 @ 0x7972
+- offset -  7273 7475 7677 7879 7A7B 7C7D 7E7F 8081  23456789ABCDEF01
+0x00007972  0a5b 2a5d 2053 7461 7264 7573 7420 456e  .[*] Stardust En
+0x00007982  6420 4164 6472 6573 733a                 d Address:
+```
+
+Because these values, normally located in `.rodata`, have been relocated into `.text` by the linker script these `*mut &str` pointers are invalid.
+
+This is compounded by the `runner` executable causing the location of the strings to be altered again.
