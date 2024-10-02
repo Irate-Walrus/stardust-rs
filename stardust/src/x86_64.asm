@@ -7,8 +7,8 @@
 
 // export
 .globl _start
-.globl _rip_start
-.globl _rip_end
+.globl _rip_ptr_start
+.globl _rip_ptr_end
 
 // entrypoint
 .section ".text.prologue"
@@ -17,7 +17,7 @@
     // aligns the stack by 16-bytes to avoid any unwanted
     // crashes while calling win32 functions and execute
     // the true C code entrypoint
-    // TY Cracked5Spider
+    // TY Cracked5pider
     //
     _start:
         push  rsi
@@ -36,7 +36,7 @@
 
     // get the return address of _rip_str and put it into the rax register
     _rip_ptr_start:
-        mov	rax, [rsp] // get the return address
+        mov rax, [rsp] // get the return address
         sub rax, 0x1b  // subtract the instructions size to get the base address
         ret            // return to _rip_start
 
@@ -51,7 +51,7 @@
     // get the return address of _rip_end and put it into the rax register
     _rip_ptr_end:
         mov rax, [rsp] // get the return address
-        add	rax, 0xb   // get implant end address
+        add rax, 0xb   // get implant end address
         ret            // return to _rip_end
 
 // symbol to truncate to

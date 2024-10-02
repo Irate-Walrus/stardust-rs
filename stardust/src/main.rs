@@ -50,12 +50,14 @@ const STDOUT: usize = 0x01;
 #[no_mangle]
 pub extern "C" fn main() {
     print("[+] Hello Stardust\n");
+
     let start = rip_start();
     let end = rip_end();
-    let length = (end as usize) - (start as usize);
+    let length = end as usize - start as usize;
+
     print(&format!("[*] Stardust Start Address:\t{:p}\n", start));
     print(&format!("[*] Stardust End Address:\t{:p}\n", end));
-    print(&format!("[*] Stardust Length:\t\t{:?}\n", length));
+    print(&format!("[*] Stardust Length:\t\t{}B\n", length));
 
     exit(0);
 }
