@@ -8,7 +8,7 @@ extern "C" {
 }
 
 /*
-    So it turns out that if you were to use _rip_start() or _rip_end() directly `lld` will decide a `got` is needed...
+    So it turns out that if you were to use _rip_start() or _rip_end() directly `lld` will decide a Global Offset Table is needed...
     This would be painful to deal with, so lets just create those functions in Rust
 */
 
