@@ -10,16 +10,17 @@ Following is the current output of `cargo make run`.
 
 ```
 [+] Hello Stardust
-[1]    37573 segmentation fault (core dumped)  ./target/x86_64-unknown-linux-gnu/debug/runner
+[1]    104538 segmentation fault (core dumped)  ./target/x86_64-unknown-linux-gnu/debug/runner
 ```
 
 Following is the desired output and current output of `cargo make run-nopic`
 
 ```
 [+] Hello Stardust
-[*] Stardust Start Address:     0x21e7e0
-[*] Stardust End Address:       0x21e815
-[*] Stardust Length:            53
+[*] Stardust Start Address:     0x10050
+[*] Stardust End Address:       0x15278
+[*] Stardust Length:            21032B
+[*] Stardust Data Offset:       0x16000
 ```
 
 ## Problem #1 - core::fmt Segmentation Fault
@@ -159,6 +160,4 @@ The two absolute address the `PIC` is trying to access are:
 0x00007982  6420 4164 6472 6573 733a                 d Address:
 ```
 
-Because these values, normally located in `.rodata`, have been relocated into `.text` by the linker script these `*mut &str` pointers are invalid.
-
-This is compounded by the `runner` executable causing the location of the strings to be altered again.
+Because these values have been extracted from the `.text` section to become shellcode these `*mut &str` pointers are invalid.
