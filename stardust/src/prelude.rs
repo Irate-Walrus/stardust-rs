@@ -15,8 +15,8 @@ extern "C" {
 #[cfg(target_arch = "x86_64")]
 #[link_section = ".text.prologue"]
 #[inline(never)]
-pub fn rip_start() -> *const usize {
-    let addr: *const usize;
+pub fn rip_start() -> *mut usize {
+    let addr: *mut usize;
 
     unsafe {
         asm!(
@@ -32,8 +32,8 @@ pub fn rip_start() -> *const usize {
 #[cfg(target_arch = "x86_64")]
 #[link_section = ".text.epilogue"]
 #[inline(never)]
-pub fn rip_end() -> *const usize {
-    let addr: *const usize;
+pub fn rip_end() -> *mut usize {
+    let addr: *mut usize;
 
     unsafe {
         asm!(
@@ -46,4 +46,10 @@ pub fn rip_end() -> *const usize {
     addr
 }
 
+pub fn data_offset() -> *mut usize {
+    #[allow(unused_unsafe)]
+    unsafe {
+        &raw mut _data_offset
+    }
+}
 // TODO: migrate entire contents of x86_64.asm into Rust.

@@ -54,10 +54,12 @@ pub extern "C" fn main() {
     let start = rip_start();
     let end = rip_end();
     let length = end as usize - start as usize;
+    let offset = data_offset();
 
     print(&format!("[*] Stardust Start Address:\t{:p}\n", start));
     print(&format!("[*] Stardust End Address:\t{:p}\n", end));
     print(&format!("[*] Stardust Length:\t\t{}B\n", length));
+    print(&format!("[*] Stardust Data Offset:\t{:p}\n", offset));
 
     exit(0);
 }
