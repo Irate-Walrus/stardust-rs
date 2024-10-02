@@ -2,11 +2,11 @@ ENTRY(_start);
 
 SECTIONS
 {
-	. = ALIGN(16);
-	.text :
-	{
-		*(.text.prologue)     /* aligns the stack by 16-bytes and executes implant entrypoint*/
-		*(.text.implant)      /* implant */
+    . = 0x10000;                /* Adding this means that the sacrifical elf also executes (until it jumps into RW memory) */
+
+	.text :	{
+		*(.text.prologue)       /* aligns the stack by 16-bytes and executes implant entrypoint*/
+		*(.text.implant)        /* implant */
 
         /* Ensure memcpy, memmove, memset, memcmp, bcmp, strlen are placed in .text */
         *(.text.memcpy)
@@ -16,12 +16,12 @@ SECTIONS
         *(.text.bcmp)
         *(.text.strlen)
 
-        *(.text._*)            /* rust auto-generated helpers/junk */
-        *(.text..Lanon*)       /* rust auto-generated helpers/junk */
-        *(.text.unlikely*)     /* unlikely executed functions, related to compiler optimization */
+        *(.text._*)             /* rust auto-generated helpers/junk */
+        *(.text..Lanon*)        /* rust auto-generated helpers/junk */
+        *(.text.unlikely*)      /* unlikely executed functions, related to compiler optimization */
+        *(.text.rust_oom)       /* rust auto-generated alloc helper */
 
-
-		*(.rodata*)            /* read-only (const) data */
+		*(.rodata*)             /* read-only (const) data */
 
     	/*
     	`FILL (pattern)` specifies the fill pattern for the current session.
@@ -29,7 +29,7 @@ SECTIONS
         (for example, gaps left due to the required alignment of input sections)
         are filled with the two least significant bytes of the expression.
     	*/
-    	FILL( 0x00 )           /* fills unspecified regions of memory with 0x00 */
+    	FILL( 0x00 )            /* fills unspecified regions of memory with 0x00 */
 
     	/*
     	Return the location counter (.) aligned to the next `exp` boundary.
@@ -43,10 +43,10 @@ SECTIONS
 
     	/* Insert `_data_offset` symbol at linking so it can be used within code. */
         _data_offset = .;
-		*(.data*)                 /* static, global, static local read-write data */
-		// *(.got*)                  /* global-offset table, elf-specific */
-		KEEP(*(.text.epilogue))        /* get RIP/EIP/PC at end of implant */
-		KEEP(*(.text.end))    /* flag marking end of .text section */
+		*(.data*)               /* static, global, static local read-write data */
+
+		*(.text.epilogue)       /* get RIP/EIP/PC at end of implant */
+		KEEP(*(.text.end))      /* flag marking end of .text section */
 	}
 
 	/DISCARD/ :

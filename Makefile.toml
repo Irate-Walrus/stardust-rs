@@ -4,8 +4,8 @@ default_to_workspace = false
 
 [env]
 TARGET = "x86_64-unknown-linux-gnu"
-STARDUST_PIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C lto=true -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--no-gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pie -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/linker.ld"
-STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--no-gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pie -C link-arg=-Wl,-e_start"
+STARDUST_PIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C lto=true -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/linker.ld"
+STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/test.ld"
 #"-C",
 #"link-arg=-fpack-structs=8",
 
@@ -57,26 +57,26 @@ script = ["cargo clean", "rm -f ./target"]
 description = "Copy .text section of the binary to stardust.bin."
 command = "objcopy"
 args = [
-    "-O",
-    "binary",
-    "-j",
-    ".text",
-    "target/${TARGET}/release/stardust",
-    "target/stardust.bin",
+	"-O",
+	"binary",
+	"-j",
+	".text",
+	"target/${TARGET}/release/stardust",
+	"target/stardust.bin",
 ]
 
 [tasks.objdump]
 description = "Dumps stardust to stdout using objdump."
 command = "objdump"
 args = [
-    "-dzrWC",
-    "-mi386",
-    "-Mx86-64",
-    "-Mintel",
-    "-j",
-    ".text",
-    "-z",
-    "target/${TARGET}/release/stardust",
+	"-dzrWC",
+	"-mi386",
+	"-Mx86-64",
+	"-Mintel",
+	"-j",
+	".text",
+	"-z",
+	"target/${TARGET}/release/stardust",
 ]
 
 [tasks.debug]
