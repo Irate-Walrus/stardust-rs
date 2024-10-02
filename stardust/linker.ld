@@ -43,7 +43,8 @@ SECTIONS
 
     	/* Insert `_data_offset` symbol at linking so it can be used within code. */
         _data_offset = .;
-		*(.data*)               /* static, global, static local read-write data */
+		*(.data*)               /* initialized static, global, static local read-write data */
+        *(.bss*)                /* unintialized static, global, static local read-write data */
 
 		*(.text.epilogue)       /* get RIP/EIP/PC at end of implant */
 		KEEP(*(.text.end))      /* flag marking end of .text section */

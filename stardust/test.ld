@@ -31,6 +31,7 @@ SECTIONS
         /* Insert `_data_offset` symbol at linking so it can be used within code. */
         _data_offset = .;
         *(.data*)           /* static, global, static local read-write data */
+        *(.bss*)            /* unintialized static, global, static local read-write data */
 	}
 
   	/DISCARD/ :
