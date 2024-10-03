@@ -76,7 +76,7 @@ Using `alloc` appears to work but functionality that requires `compilier_builtin
 
 Will result in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored in memory and referenced by a RIP-relative offset.
 
-**Solution**: None
+**Solution**: Using in-project implementations of required functions may resolve issue here.
 
 ## Problem #3 - Global Offset Table
 
