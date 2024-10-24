@@ -1,4 +1,4 @@
-# Unstable/Incomplete Rust PIC Template
+# Incomplete Rust PIC Template
 
 > [!warning]
 > This is/was an experiment which I may or may not revisit due to other priorities, described below are the issues I ended up facing.
@@ -14,18 +14,14 @@ This is a PoC targeted at x64 linux and has numerous issues, it is based on the 
 Following is the current output of `cargo make run`.
 
 ```
-[+] Hello Stardust
-[1]    104538 segmentation fault (core dumped)  ./target/x86_64-unknown-linux-gnu/debug/runner
-```
-
-Following is the desired output and current output of `cargo make run-nopic`
-
-```
-[+] Hello Stardust
-[*] Stardust Start Address:     0x10050
-[*] Stardust End Address:       0x15278
-[*] Stardust Length:            21032B
-[*] Stardust Data Offset:       0x16000
+[>] Allocation Start Address:   0x7f7790907000
+[>] Allocation End Address:     0x7f7790907e5e
+[>] Allocation Size:            3678B
+[*] Hello Stardust!
+[*] Stardust Start Address:     0x7f7790907010
+[*] Stardust End Address:       0x7f7790907e58
+[*] Stardust Length:            3656B
+[*] Stardust Data Offset:       0x11000
 ```
 
 ## Problem #1 - `format!` macro e.g. `&'static &str`
