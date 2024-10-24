@@ -5,3 +5,5 @@ spec
 *.bin
 .gdb_history
 .rustup
+vgcore*
+*ghidra*
