@@ -10,6 +10,7 @@ This is a PoC targeted at x64 linux and has numerous issues, it is based on the 
 - https://5pider.net/blog/2024/01/27/modern-shellcode-implant-design/
 - https://github.com/wumb0/rust_bof
 - https://kerkour.com/rust-position-independent-shellcode
+- https://github.com/safedv/Rustic64
 
 Following is the current output of `cargo make run`.
 

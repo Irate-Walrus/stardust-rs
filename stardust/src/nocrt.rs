@@ -1,3 +1,5 @@
+// Source: https://github.com/safedv/Rustic64/blob/master/src/nocrt.rs
+
 /// Sets the first `n` bytes of the block of memory pointed to by `s`
 /// to the specified value `c` (interpreted as an unsigned char).
 ///
