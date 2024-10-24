@@ -2,6 +2,8 @@
 #![no_main]
 #![allow(unused_imports)]
 
+use core::str;
+
 use syscalls::{syscall, Sysno};
 
 extern crate alloc;
@@ -49,17 +51,46 @@ const STDOUT: usize = 0x01;
 #[link_section = ".text.implant"]
 #[no_mangle]
 pub extern "C" fn main() {
-    print("[+] Hello Stardust\n");
+    print("[*] Hello Stardust!\n");
 
     let start = rip_start();
     let end = rip_end();
     let length = end as usize - start as usize;
     let offset = data_offset();
 
+    print("[*] Stardust Start Address:\t");
+    let hex_buf = usize_to_hex_str(start as usize);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    print("[*] Stardust End Address:\t");
+    let hex_buf = usize_to_hex_str(end as usize);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    print("[*] Stardust Length:\t\t");
+    let hex_buf = usize_to_int_str(length);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("B\n");
+
+    print("[*] Stardust Data Offset:\t");
+    let hex_buf = usize_to_hex_str(offset as usize);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    /*
+    // TODO: FIX THIS EVENTUALLY
     print(&format!("[*] Stardust Start Address:\t{:p}\n", start));
     print(&format!("[*] Stardust End Address:\t{:p}\n", end));
     print(&format!("[*] Stardust Length:\t\t{}B\n", length));
     print(&format!("[*] Stardust Data Offset:\t{:p}\n", offset));
+    */
+
+    //unsafe { syscall!(Sysno::mprotect,) }
 
     exit(0);
 }
@@ -74,4 +105,69 @@ fn exit(code: u8) {
     unsafe {
         _ = syscall!(Sysno::exit, code);
     }
+}
+
+fn usize_to_hex_str(num: usize) -> [u8; 18] {
+    let mut buffer = [b'0'; 16]; // Buffer to hold the hex characters
+    let mut value = num;
+    let mut index = 15; // Start from the end of the buffer
+
+    while value > 0 {
+        let digit = (value % 16) as usize; // Get the last hex digit
+        buffer[index] = match digit {
+            0..=9 => b'0' + digit as u8,
+            _ => b'a' + (digit - 10) as u8,
+        };
+        value /= 16; // Move to the next digit
+        index -= 1;
+    }
+
+    let start_index = index + 1; // First valid character index
+
+    // Create a new buffer to store the valid hex characters
+    let mut result = [0u8; 18];
+    result[0] = b'0';
+    result[1] = b'x';
+
+    // Manually copy valid characters to the result buffer to avoid memcpy
+    let mut result_index = 2;
+    for i in start_index..16 {
+        result[result_index] = buffer[i];
+        result_index += 1;
+    }
+
+    result
+}
+
+fn usize_to_int_str(num: usize) -> [u8; 20] {
+    let mut buffer = [b'0'; 20]; // Buffer to hold the integer characters
+    let mut value = num;
+    let mut index = 19; // Start from the end of the buffer
+
+    // Handle the case when num is 0
+    if value == 0 {
+        buffer[index] = b'0';
+        return buffer;
+    }
+
+    // Convert the number to its string representation
+    while value > 0 {
+        let digit = (value % 10) as usize; // Get the last decimal digit
+        buffer[index] = b'0' + digit as u8; // Convert to ASCII
+        value /= 10; // Move to the next digit
+        index -= 1;
+    }
+
+    let start_index = index + 1; // First valid character index
+
+    let mut result = [0u8; 20];
+
+    // Manually copy valid characters to the result buffer to avoid memcpy
+    let mut result_index = 0;
+    for i in start_index..20 {
+        result[result_index] = buffer[i];
+        result_index += 1;
+    }
+
+    result
 }
