@@ -30,7 +30,7 @@ Following is the current output of `cargo make run`.
 Using the `alloc::fmt::format!` macro will result in a segementation fault due to absolute addresses to reference the `pieces` in `Arguments { pieces, fmt: None, args }`.
 
 
-This results in the `if !piece.is_empty()` check failting within the following code
+This results in the `if !piece.is_empty()` check failing within the following code
 @ [https://github.com/rust-lang/rust/blob/master/library/core/src/fmt/mod.rs](https://github.com/rust-lang/rust/blob/150247c338a54cb3d08614d8530d1bb491fa90db/library/core/src/fmt/mod.rs#L1172C1-L1190C10):
 
 ```rust
@@ -62,7 +62,7 @@ This leads to a call being made to `_gcc_except_table` which has been removed by
 
 **Solution**: None
 
-## Problem #2 - Compiler Builtins
+## Problem #2 - Bad call when using`compiler_builtins` crate
 
 Using `alloc` appears to work but functionality that requires `compilier_builtins`, e.g. the following functions:
 - `memcpy`
@@ -73,7 +73,7 @@ Using `alloc` appears to work but functionality that requires `compilier_builtin
 
 Will result in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored in memory and referenced by a RIP-relative offset.
 
-**Solution**: Using in-project implementations of required functions may resolve issue here.
+**Solution**: Using in-project implementations of required functions appears to resolve issues here. I would prefer to use `compiler_builtins` as it is cross-platform and faster :/
 
 ## Problem #3 - Global Offset Table
 
