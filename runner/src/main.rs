@@ -8,5 +8,14 @@ fn main() {
     memory.copy_from_slice(SHELLCODE);
 
     let exec: extern "C" fn() -> ! = unsafe { mem::transmute(memory.as_ptr()) };
+
+    println!(
+        "[>] Allocation Start Address:\t0x{:x}",
+        memory.as_ptr() as usize
+    );
+    println!("[>] Allocation End Address:\t0x{:x}", unsafe {
+        memory.as_ptr().offset(memory.len() as isize) as usize
+    });
+    println!("[>] Allocation Size:\t\t{}B", memory.len());
     exec();
 }
