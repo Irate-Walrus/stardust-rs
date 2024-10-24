@@ -2,7 +2,7 @@ ENTRY(_start);
 
 SECTIONS
 {
-    . = 0x10000;                /* Adding this means that the sacrifical elf also executes (until it jumps into RW memory) */
+    /* . = 0x10000;                /* Adding this means that the sacrifical elf also executes (until it jumps into RW memory) */
 
 	.text :	{
 		*(.text.prologue)       /* aligns the stack by 16-bytes and executes implant entrypoint*/
