@@ -45,6 +45,7 @@ SECTIONS
         _data_offset = .;
 		*(.data*)               /* initialized static, global, static local read-write data */
         *(.bss*)                /* unintialized static, global, static local read-write data */
+        *(.got*)				/* include global offset table so that _data_offset symbol can be used*/
 
 		*(.text.epilogue)       /* get RIP/EIP/PC at end of implant */
 		KEEP(*(.text.end))      /* flag marking end of .text section */
