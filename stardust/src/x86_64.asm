@@ -51,7 +51,7 @@
     // get the return address of _rip_end and put it into the rax register
     _rip_ptr_end:
         mov rax, [rsp] // get the return address
-        add rax, 0xb   // get implant end address
+        add rax, 0xa   // get implant end address
         ret            // return to _rip_end
 
 // symbol to truncate to

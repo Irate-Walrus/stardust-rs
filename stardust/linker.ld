@@ -48,7 +48,7 @@ SECTIONS
         *(.got*)				/* include global offset table so that _data_offset symbol can be used*/
 
 		*(.text.epilogue)       /* get RIP/EIP/PC at end of implant */
-		KEEP(*(.text.end))      /* flag marking end of .text section */
+		/* KEEP(*(.text.end))      /* flag marking end of .text section */
 	}
 
 	/DISCARD/ :

@@ -13,14 +13,13 @@ extern "C" {
 */
 
 #[cfg(target_arch = "x86_64")]
-#[link_section = ".text.prologue"]
 #[inline(never)]
 pub fn rip_start() -> *mut usize {
     let addr: *mut usize;
 
     unsafe {
         asm!(
-            "call _rip_ptr_start",  // call the assembly function
+            "call _rip_start",  // call the assembly function
             "mov {0}, rax",     // move the value in rax to addr
             out(reg) addr       // output to addr
         );
@@ -30,14 +29,13 @@ pub fn rip_start() -> *mut usize {
 }
 
 #[cfg(target_arch = "x86_64")]
-#[link_section = ".text.epilogue"]
 #[inline(never)]
 pub fn rip_end() -> *mut usize {
     let addr: *mut usize;
 
     unsafe {
         asm!(
-            "call _rip_ptr_end",  // call the assembly function
+            "call _rip_end",  // call the assembly function
             "mov {0}, rax",     // move the value in rax to addr
             out(reg) addr       // output to addr
         );
