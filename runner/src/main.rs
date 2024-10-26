@@ -30,11 +30,13 @@ fn main() {
 
 #[cfg(target_os = "linux")]
 fn alloc_rw() -> *mut usize {
+    use std::ffi::c_void;
+
     use libc::{mmap, MAP_ANONYMOUS, MAP_SHARED, PROT_READ, PROT_WRITE};
 
     let buffer_ptr = unsafe {
         mmap(
-            ptr::null_mut(),
+            0x700000000000 as *mut c_void,
             SHELLCODE.len(),
             PROT_READ | PROT_WRITE,
             MAP_SHARED | MAP_ANONYMOUS,
