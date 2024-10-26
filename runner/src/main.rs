@@ -16,9 +16,10 @@ fn main() {
     set_rx(buffer_ptr);
 
     println!("[*] Allocation Start Address:\t0x{:x}", buffer_ptr as usize);
-    println!("[*] Allocation End Address:\t0x{:x}", unsafe {
-        buffer_ptr.offset(SHELLCODE.len() as isize) as usize
-    });
+    println!(
+        "[*] Allocation End Address:\t0x{:x}",
+        buffer_ptr as usize + SHELLCODE.len()
+    );
 
     println!("[*] Allocation Size:\t\t{}B", SHELLCODE.len());
 
