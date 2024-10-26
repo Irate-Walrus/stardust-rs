@@ -1,18 +1,10 @@
 #![no_std]
 #![no_main]
-#![allow(unused_imports)]
-
-use core::mem::MaybeUninit;
-use core::ptr;
-use core::str;
-
-use alloc::boxed::Box;
-use instance::Instance;
-use syscalls::{syscall, Sysno};
 
 extern crate alloc;
-use alloc::format;
-use alloc::string::{String, ToString};
+
+use core::str;
+use syscalls::{syscall, Sysno};
 
 pub mod allocator;
 pub mod instance;
@@ -20,27 +12,9 @@ pub mod nocrt;
 pub mod prelude;
 
 use allocator::StardustAllocator;
+use instance::instance;
+use instance::Instance;
 use prelude::*;
-
-/// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493
-///
-/// It shouldn't even be possible to reach this function, thanks to panic=abort,
-/// but libcore is compiled with unwinding enabled and that ends up making unreachable
-/// references to this.
-#[no_mangle]
-extern "C" fn rust_eh_personality() {
-    unreachable!("Unwinding not supported");
-}
-
-/// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493
-///
-/// It shouldn't even be possible to reach this function, thanks to panic=abort,
-/// but libcore is compiled with unwinding enabled and that ends up making unreachable
-/// references to this.
-#[no_mangle]
-extern "C" fn _Unwind_Resume() -> ! {
-    unreachable!("Unwinding not supported");
-}
 
 #[cfg(not(test))]
 #[panic_handler]
@@ -49,10 +23,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 }
 
 #[global_allocator]
-#[link_section = ".text"]
 pub static ALLOCATOR: StardustAllocator = StardustAllocator;
-
-static mut INSTANCE: Option<Box<Instance>> = None;
 
 #[link_section = ".text.implant"]
 #[no_mangle]
@@ -99,26 +70,14 @@ pub extern "C" fn main() {
         let _ = syscall!(Sysno::mprotect, data_addr, size_of::<usize>(), 0x1 | 0x2);
     }
 
-    let instance = Box::new(Instance::default());
-    let instance_ptr = Box::as_ref(&instance) as *const Instance;
-
-    unsafe { INSTANCE = Some(instance) };
+    let instance = instance();
+    let instance_ptr = instance as *const Instance;
 
     print("[*] Stardust Instance:\t\t");
     let hex_buf = usize_to_hex_str(instance_ptr as usize);
     let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
     print(&hex_str);
     print("\n");
-
-    /*
-    // TODO: FIX THIS EVENTUALLY
-    print(&format!("[*] Stardust Start Address:\t{:p}\n", start));
-    print(&format!("[*] Stardust End Address:\t{:p}\n", end));
-    print(&format!("[*] Stardust Length:\t\t{}B\n", length));
-    print(&format!("[*] Stardust Data Offset:\t{:p}\n", offset));
-    */
-
-    //unsafe { syscall!(Sysno::mprotect,) }
 
     exit(0);
 }
