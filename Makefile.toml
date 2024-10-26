@@ -4,7 +4,7 @@ default_to_workspace = false
 
 [env]
 TARGET = "x86_64-unknown-linux-gnu"
-STARDUST_PIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C lto=true -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/linker.ld"
+STARDUST_PIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C lto=true -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/linker.ld -C link-arg=-Wl,-Map=./target/stardust.map"
 STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C codegen-units=1 -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/test.ld"
 #"-C",
 #"link-arg=-fpack-structs=8",
