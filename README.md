@@ -15,14 +15,20 @@ This is a PoC targeted at x64 linux and has numerous issues, it is based on the 
 Following is the current output of `cargo make run`.
 
 ```
-[>] Allocation Start Address:   0x7f7790907000
-[>] Allocation End Address:     0x7f7790907e5e
-[>] Allocation Size:            3678B
+***     [LOADER]        ***
+[*] Allocate RW Memory
+[*] Copy Shellcode Into RW Memory
+[*] Set Memory RX
+[*] Allocation Start Address:   0x7fc5f51e0000
+[*] Allocation End Address:     0x7fc5f51e72f0
+[*] Allocation Size:            3678B
+
+***     [STARDUST]      ***
 [*] Hello Stardust!
-[*] Stardust Start Address:     0x7f7790907010
-[*] Stardust End Address:       0x7f7790907e58
+[*] Stardust Start Address:     0x7fc5f51e0010
+[*] Stardust End Address:       0x7fc5f51e0e58
 [*] Stardust Length:            3656B
-[*] Stardust Data Offset:       0x11000
+[*] Stardust Data Offset:       0x1000
 ```
 
 ## Problem #1 - `format!` macro e.g. `&'static &str`
