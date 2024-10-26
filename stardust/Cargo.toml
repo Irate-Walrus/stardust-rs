@@ -19,6 +19,5 @@ authors = ["Irate-Walrus"]
 
 [dependencies]
 syscalls = { version = "0.6.18", default-features = false, features = [
-    "x86_64",
+	"x86_64",
 ] }
-compiler_builtins = { version = "0.1.126", features = ["mem"] }

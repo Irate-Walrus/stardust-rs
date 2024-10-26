@@ -52,7 +52,8 @@ SECTIONS
 
 	/DISCARD/ :
 	{
-		*(.eh_frame*)			/* without this the TEXT_BASE cannot equal 0x0 */
+		*(.eh_frame*)			/* without this the text section base cannot be 0x0 */
+		*(.gcc_except*)			/* ditto */
 		*(.interp)
 		*(.comment)
 		*(.debug_frame)

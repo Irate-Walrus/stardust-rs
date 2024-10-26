@@ -2,8 +2,12 @@
 #![no_main]
 #![allow(unused_imports)]
 
+use core::mem::MaybeUninit;
+use core::ptr;
 use core::str;
 
+use alloc::boxed::Box;
+use instance::Instance;
 use syscalls::{syscall, Sysno};
 
 extern crate alloc;
@@ -11,6 +15,8 @@ use alloc::format;
 use alloc::string::{String, ToString};
 
 pub mod allocator;
+pub mod instance;
+pub mod nocrt;
 pub mod prelude;
 
 use allocator::StardustAllocator;
@@ -46,7 +52,7 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 #[link_section = ".text"]
 pub static ALLOCATOR: StardustAllocator = StardustAllocator;
 
-const STDOUT: usize = 0x01;
+static mut INSTANCE: Option<Box<Instance>> = None;
 
 #[link_section = ".text.implant"]
 #[no_mangle]
@@ -77,7 +83,29 @@ pub extern "C" fn main() {
     print("B\n");
 
     print("[*] Stardust Data Offset:\t");
-    let hex_buf = usize_to_hex_str(offset as usize);
+    let hex_buf = usize_to_hex_str(offset);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    let data_addr = unsafe { start.add(offset / size_of::<usize>()) };
+    print("[*] Stardust Data Address:\t");
+    let hex_buf = usize_to_hex_str(data_addr as usize);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    unsafe {
+        let _ = syscall!(Sysno::mprotect, data_addr, size_of::<usize>(), 0x1 | 0x2);
+    }
+
+    let instance = Box::new(Instance::default());
+    let instance_ptr = Box::as_ref(&instance) as *const Instance;
+
+    unsafe { INSTANCE = Some(instance) };
+
+    print("[*] Stardust Instance:\t\t");
+    let hex_buf = usize_to_hex_str(instance_ptr as usize);
     let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
     print(&hex_str);
     print("\n");
@@ -97,7 +125,7 @@ pub extern "C" fn main() {
 
 fn print(s: &str) {
     unsafe {
-        let _ = syscall!(Sysno::write, STDOUT, s.as_ptr(), s.len());
+        let _ = syscall!(Sysno::write, 0x01, s.as_ptr(), s.len());
     }
 }
 

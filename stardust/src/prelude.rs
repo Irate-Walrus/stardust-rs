@@ -44,10 +44,11 @@ pub fn rip_end() -> *mut usize {
     addr
 }
 
-pub fn data_offset() -> *mut usize {
+pub fn data_offset() -> usize {
     #[allow(unused_unsafe)]
     unsafe {
-        &raw mut _data_offset
+        let offset_addr = &raw mut _data_offset;
+        offset_addr as usize
     }
 }
 // TODO: migrate entire contents of x86_64.asm into Rust.

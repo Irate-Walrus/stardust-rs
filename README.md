@@ -19,16 +19,18 @@ Following is the current output of `cargo make run`.
 [*] Allocate RW Memory
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
-[*] Allocation Start Address:   0x7f0d4934b000
-[*] Allocation End Address:     0x7f0d4934be47
-[*] Allocation Size:            3655B
+[*] Allocation Start Address:   0x700000000000
+[*] Allocation End Address:     0x70000000102f
+[*] Allocation Size:            4143B
 
 ***     [STARDUST]      ***
 [*] Hello Stardust!
-[*] Stardust Start Address:     0x7f0d4934b000
-[*] Stardust End Address:       0x7f0d4934be47
-[*] Stardust Length:            3655B
+[*] Stardust Start Address:     0x700000000000
+[*] Stardust End Address:       0x70000000102f
+[*] Stardust Length:            4143B
 [*] Stardust Data Offset:       0x1000
+[*] Stardust Data Address:      0x700000001000
+[*] Stardust Instance:          0x7ff9930cc000
 ```
 
 ## Problem #1 - `format!` macro e.g. `&'static &str`
