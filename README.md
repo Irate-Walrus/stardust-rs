@@ -70,27 +70,35 @@ This leads to a call being made to `_gcc_except_table` which has been removed by
 
 **Solution**: None
 
-## Problem #2 - Bad call when using`compiler_builtins` crate
+## Problem #2 - Global Offset Table (GOT)
 
-Using `alloc` appears to work but functionality that requires `compilier_builtins`, e.g. the following functions:
+A bunch of stuff uses the GOT including calls to functions with the `compiler_builtins` crate, e.g. the following functions:
 - `memcpy`
 - `memmove`
 - `memset`
 - `memcmp`
 - `bcmp`
 
-Will result in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored in memory and referenced by a RIP-relative offset.
+This results in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored within the GOT and then referenced by a RIP-relative offset.
 
-**Solution**: Using in-project implementations of required functions appears to resolve issues here. I would prefer to use `compiler_builtins` as it is cross-platform and faster :/
+Similarly using `extern "C"` functions directly may result in the use the GOT.
 
-## Problem #3 - Global Offset Table
 
-Calling `extern "C"` functions directly may result in the use of a Global Offset Table placed within the `.got` section.
+The following code was used to ensure `memcpy` was required by the binary:
 
-The Global Offset Table contains absolute/hard-coded memory addresses which when called result in a segmentation fault.
+```rust
+let src = alloc::string::String::from("Hello, world!");
+let mut dst: String = src.chars().rev().collect();
+dst.push('\n');
+print(&dst);
+```
+Patching the hardcoded addresses with GDB results in a successful execution as seen below:
 
-**Solution**: Don't directly call `extern` functions (call them within `asm!` macro ;D)
+![Patching `memcpy` address in GOT with GDB](./docs/patching-memcpy-addr.png)
 
+**Solution**:
+- Patch the GOT dynamically during runtime.
+- Don't directly call `extern` functions before patching, call them within `asm!` macro
 
 ## Problem #4 `.bss.__rust_no_alloc_shim_is_unstable`
 
