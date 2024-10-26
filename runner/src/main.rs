@@ -32,14 +32,14 @@ fn main() {
 fn alloc_rw() -> *mut usize {
     use std::ffi::c_void;
 
-    use libc::{mmap, MAP_ANONYMOUS, MAP_SHARED, PROT_READ, PROT_WRITE};
+    use libc::{mmap, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE};
 
     let buffer_ptr = unsafe {
         mmap(
             0x700000000000 as *mut c_void,
             SHELLCODE.len(),
             PROT_READ | PROT_WRITE,
-            MAP_SHARED | MAP_ANONYMOUS,
+            MAP_PRIVATE | MAP_ANONYMOUS,
             -1,
             0,
         )
