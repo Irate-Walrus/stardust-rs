@@ -2,9 +2,8 @@ ENTRY(_start);
 
 SECTIONS
 {
-    /* . = 0x10000;                /* Adding this means that the sacrifical elf also executes (until it jumps into RW memory) */
-
 	.text :	{
+		. = 0x0;				/* this will force linker error if .text section is not at 0x0 */
 		*(.text.prologue)       /* aligns the stack by 16-bytes and executes implant entrypoint*/
 		*(.text.implant)        /* implant */
 
@@ -53,6 +52,7 @@ SECTIONS
 
 	/DISCARD/ :
 	{
+		*(.eh_frame*)			/* without this the TEXT_BASE cannot equal 0x0 */
 		*(.interp)
 		*(.comment)
 		*(.debug_frame)
