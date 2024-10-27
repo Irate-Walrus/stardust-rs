@@ -30,10 +30,10 @@ Following is the current output of `cargo make run`.
 [*] Stardust Length:            4167B
 [*] Stardust Data Offset:       0x1000
 [*] Stardust Data Address:      0x700000001000
-[*] Stardust GOT Address:       0x700000001000
-[*] Stardust Data Address:      0x700000001010
+[*] Stardust GOT Offset:        0x1010
+[*] Stardust GOT Address:       0x700000001010
 [*] Stardust GOT Length:        40B
-[*] Stardust Instance:          0x7ff495a2e000
+[*] Stardust Instance:          0x7f2451d8a000
 [*] Testing memcpy:             SUCCESS
 [*] HITTING BREAKPOINT
 ```

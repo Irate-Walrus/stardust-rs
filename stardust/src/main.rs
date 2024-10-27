@@ -1,9 +1,9 @@
 #![no_std]
 #![no_main]
-/* Required to use `core::intrinisics::breakpoint` */
+/* Required to use `core::intrinisics` */
 #![allow(internal_features)]
 #![feature(core_intrinsics)]
-use core::intrinsics::breakpoint;
+use core::intrinsics;
 
 extern crate alloc;
 
@@ -12,11 +12,10 @@ use core::str;
 
 use syscalls::{syscall, Sysno};
 
-pub mod utils;
-
 pub mod allocator;
 pub mod instance;
 pub mod prelude;
+pub mod utils;
 
 use allocator::StardustAllocator;
 use instance::instance;
@@ -47,7 +46,7 @@ extern "C" fn _Unwind_Resume() -> ! {
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(_: &core::panic::PanicInfo) -> ! {
-    loop {}
+    intrinsics::abort()
 }
 
 #[global_allocator]
@@ -73,10 +72,10 @@ pub extern "C" fn main() {
     info_addr!("Stardust Data Address", data_addr);
 
     let got_offset = got_offset() - 1; // I don't know why this off-by-one error exists, but it does.
-    info_addr!("Stardust GOT Address", data_addr);
+    info_addr!("Stardust GOT Offset", got_offset);
 
     let got_addr = unsafe { stardust_start.add(got_offset / size_of::<usize>()) };
-    info_addr!("Stardust Data Address", got_addr);
+    info_addr!("Stardust GOT Address", got_addr);
 
     let got_len = epilogue_offset() - got_offset;
     info_size!("Stardust GOT Length", got_len);
@@ -111,7 +110,7 @@ pub extern "C" fn main() {
 
     info!("HITTING BREAKPOINT");
     unsafe {
-        breakpoint();
+        intrinsics::breakpoint();
     }
 
     exit(0);
