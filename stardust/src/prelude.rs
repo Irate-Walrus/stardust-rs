@@ -4,7 +4,9 @@ use core::arch::{asm, global_asm};
 global_asm!(include_str!("x86_64.asm"));
 
 extern "C" {
-    pub static mut _data_offset: usize;
+    static mut _data_offset: usize;
+    static mut _got_offset: usize;
+    static mut _epilogue_offset: usize;
 }
 
 /*
@@ -52,3 +54,19 @@ pub fn data_offset() -> usize {
     }
 }
 // TODO: migrate entire contents of x86_64.asm into Rust.
+
+pub fn got_offset() -> usize {
+    #[allow(unused_unsafe)]
+    unsafe {
+        let offset_addr = &raw mut _got_offset;
+        offset_addr as usize
+    }
+}
+
+pub fn epilogue_offset() -> usize {
+    #[allow(unused_unsafe)]
+    unsafe {
+        let offset_addr = &raw mut _epilogue_offset;
+        offset_addr as usize
+    }
+}

@@ -1,20 +1,45 @@
 #![no_std]
 #![no_main]
+/* Required to use `core::intrinisics::breakpoint` */
+#![allow(internal_features)]
+#![feature(core_intrinsics)]
+use core::intrinsics::breakpoint;
 
 extern crate alloc;
 
+use alloc::string::String;
 use core::str;
 use syscalls::{syscall, Sysno};
 
 pub mod allocator;
 pub mod instance;
-pub mod nocrt;
 pub mod prelude;
 
 use allocator::StardustAllocator;
 use instance::instance;
 use instance::Instance;
 use prelude::*;
+
+/* These workarounds are required to compile if `alloc::format!` macro is used. */
+/// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493
+///
+/// It shouldn't even be possible to reach this function, thanks to panic=abort,
+/// but libcore is compiled with unwinding enabled and that ends up making unreachable
+/// references to this.
+#[no_mangle]
+extern "C" fn rust_eh_personality() {
+    unreachable!("Unwinding not supported");
+}
+
+/// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493
+///
+/// It shouldn't even be possible to reach this function, thanks to panic=abort,
+/// but libcore is compiled with unwinding enabled and that ends up making unreachable
+/// references to this.
+#[no_mangle]
+extern "C" fn _Unwind_Resume() -> ! {
+    unreachable!("Unwinding not supported");
+}
 
 #[cfg(not(test))]
 #[panic_handler]
@@ -33,7 +58,6 @@ pub extern "C" fn main() {
     let start = rip_start();
     let end = rip_end();
     let length = end as usize - start as usize;
-    let offset = data_offset();
 
     print("[*] Stardust Start Address:\t");
     let hex_buf = usize_to_hex_str(start as usize);
@@ -53,21 +77,58 @@ pub extern "C" fn main() {
     print(&hex_str);
     print("B\n");
 
+    let data_offset = data_offset();
     print("[*] Stardust Data Offset:\t");
-    let hex_buf = usize_to_hex_str(offset);
+    let hex_buf = usize_to_hex_str(data_offset);
     let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
     print(&hex_str);
     print("\n");
 
-    let data_addr = unsafe { start.add(offset / size_of::<usize>()) };
+    let data_addr = unsafe { start.add(data_offset / size_of::<usize>()) };
     print("[*] Stardust Data Address:\t");
     let hex_buf = usize_to_hex_str(data_addr as usize);
     let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
     print(&hex_str);
     print("\n");
 
+    print("[*] Stardust GOT Offset:\t");
+    let got_offset = got_offset() - 1; // I don't know why this off-by-one error exists, but it does.
+    let hex_buf = usize_to_hex_str(got_offset);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    let got_addr = unsafe { start.add(got_offset / size_of::<usize>()) };
+    print("[*] Stardust GOT Address:\t");
+    let hex_buf = usize_to_hex_str(got_addr as usize);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("\n");
+
+    let got_size = epilogue_offset() - got_offset;
+    print("[*] Stardust GOT Size:\t\t");
+    let hex_buf = usize_to_int_str(got_size);
+    let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
+    print(&hex_str);
+    print("B\n");
+
+    // Set data, bss, and got page to RW
+    // really this only protects `size_of::<usize>()` but it'll flip the entire page
+    // including `rip_end()`, so don't call that again
     unsafe {
         let _ = syscall!(Sysno::mprotect, data_addr, size_of::<usize>(), 0x1 | 0x2);
+    }
+
+    // Patch hardcoded memory addresses in the GLOBAL_OFFSET_TABLE
+    // this has the side effect of changing the values of *_offset() to their actual addresses
+    // but we can't call `rip_end()` after `mprotect` call anyway
+    unsafe {
+        let count = got_size / core::mem::size_of::<usize>();
+
+        for i in 0..count {
+            let value = got_addr.add(i);
+            *value += start as usize;
+        }
     }
 
     let instance = instance();
@@ -78,6 +139,15 @@ pub extern "C" fn main() {
     let hex_str: &str = unsafe { str::from_utf8_unchecked(&hex_buf) };
     print(&hex_str);
     print("\n");
+
+    // a test to ensure that memcpy from `compiler_builtins` is working
+    let src = alloc::string::String::from("\n!snitliub_relipmoc olleH ]*[");
+    let dst: String = src.chars().rev().collect();
+    print(&dst);
+
+    unsafe {
+        breakpoint();
+    }
 
     exit(0);
 }

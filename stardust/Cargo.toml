@@ -18,6 +18,7 @@ authors = ["Irate-Walrus"]
 #panic = "abort"   # Abort on panic
 
 [dependencies]
+compiler_builtins = { version = "0.1.135", features = ["mem"] }
 syscalls = { version = "0.6.18", default-features = false, features = [
 	"x86_64",
 ] }

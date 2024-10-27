@@ -20,17 +20,21 @@ Following is the current output of `cargo make run`.
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
 [*] Allocation Start Address:   0x700000000000
-[*] Allocation End Address:     0x70000000102f
-[*] Allocation Size:            4143B
+[*] Allocation End Address:     0x700000001047
+[*] Allocation Size:            4167B
 
 ***     [STARDUST]      ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
-[*] Stardust End Address:       0x70000000102f
-[*] Stardust Length:            4143B
+[*] Stardust End Address:       0x700000001047
+[*] Stardust Length:            4167B
 [*] Stardust Data Offset:       0x1000
 [*] Stardust Data Address:      0x700000001000
-[*] Stardust Instance:          0x7ff9930cc000
+[*] Stardust GOT Offset:        0x1010
+[*] Stardust GOT Address:       0x700000001010
+[*] Stardust GOT Size:          40B
+[*] Stardust Instance:          0x7f1f7889d000
+[*] Hello compiler_builtins!
 ```
 
 ## Problem #1 - `format!` macro e.g. `&'static &str`
@@ -79,7 +83,7 @@ A bunch of stuff uses the GOT including calls to functions with the `compiler_bu
 - `memcmp`
 - `bcmp`
 
-This results in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored within the GOT and then referenced by a RIP-relative offset.
+This resulted in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored within the GOT and then referenced by a RIP-relative offset.
 
 Similarly using `extern "C"` functions directly may result in the use the GOT.
 
@@ -97,11 +101,11 @@ Patching the hardcoded addresses with GDB results in a successful execution as s
 ![Patching `memcpy` address in GOT with GDB](./docs/patching-memcpy-addr.png)
 
 **Solution**:
-- Patch the GOT dynamically during runtime.
+- Patch the GOT dynamically during runtime, this appears to allow the use of `compiler_builtins`!
 - Don't directly call `extern` functions before patching, call them within `asm!` macro
 
 ## Problem #4 `.bss.__rust_no_alloc_shim_is_unstable`
 
-Haven't worked out what exactly this symbol is supposed to do, funnily enough memory allocations appeared to work fine without including it in the shellcode.
+Haven't worked out what exactly this symbol is supposed to do, funnily enough memory allocations appeared to work fine without fiddling with it.
 
 **Solution**: Ignore it until it breaks something
