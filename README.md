@@ -20,21 +20,23 @@ Following is the current output of `cargo make run`.
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
 [*] Allocation Start Address:   0x700000000000
-[*] Allocation End Address:     0x700000001047
-[*] Allocation Size:            4167B
+[*] Allocation End Address:     0x70000000310f
+[*] Allocation Size:            12559B
 
 ***     [STARDUST]      ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
-[*] Stardust End Address:       0x700000001047
-[*] Stardust Length:            4167B
-[*] Stardust Data Offset:       0x1000
-[*] Stardust Data Address:      0x700000001000
-[*] Stardust GOT Offset:        0x1010
-[*] Stardust GOT Address:       0x700000001010
-[*] Stardust GOT Length:        40B
-[*] Stardust Instance:          0x7f2451d8a000
+[*] Stardust End Address:       0x70000000310f
+[*] Stardust Length:            12559
+[*] Stardust Data Offset:       0x3000
+[*] Stardust Data Address:      0x700000003000
+[*] Stardust GOT Offset:        0x30c8
+[*] Stardust GOT Address:       0x7000000030c8
+[*] Stardust GOT Length:        56
+[*] Stardust Instance:          0x7ff709964000
 [*] Testing memcpy:             SUCCESS
+[*] lib_base_addr:              0x7ff709738000
+[*] Hello, world from write!
 [*] HITTING BREAKPOINT
 ```
 
