@@ -1,5 +1,5 @@
 [workspace]
-members = ["runner", "stardust"]
+members = ["djb2_macro", "runner", "stardust"]
 resolver = "2"
 
 [workspace.package]

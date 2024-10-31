@@ -7,6 +7,9 @@ use core::intrinsics;
 
 extern crate alloc;
 
+#[macro_use]
+extern crate djb2_macro;
+
 use alloc::string::String;
 use core::str;
 
@@ -21,6 +24,7 @@ use allocator::StardustAllocator;
 use instance::instance;
 use instance::Instance;
 use prelude::*;
+use utils::{find_fn_in_lib, find_lib};
 
 /* These workarounds are required to compile if `alloc::format!` macro is used. */
 /// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493
@@ -63,7 +67,7 @@ pub extern "C" fn main() {
 
     info_addr!("Stardust Start Address", stardust_start);
     info_addr!("Stardust End Address", stardust_end);
-    info_size!("Stardust Length", stardust_len);
+    info_int!("Stardust Length", stardust_len);
 
     let data_offset = data_offset();
     info_addr!("Stardust Data Offset", data_offset);
@@ -78,7 +82,7 @@ pub extern "C" fn main() {
     info_addr!("Stardust GOT Address", got_addr);
 
     let got_len = epilogue_offset() - got_offset;
-    info_size!("Stardust GOT Length", got_len);
+    info_int!("Stardust GOT Length", got_len);
 
     // Set data, bss, and got page to RW
     // really this only protects `size_of::<usize>()` but it'll flip the entire page
@@ -108,6 +112,23 @@ pub extern "C" fn main() {
     let dst: String = src.chars().rev().collect();
     info!(&dst);
 
+    // Find libc to demonstrate calling std library
+    instance.libc.base_addr = unsafe { find_lib(djb2_hash!(b"libc"), 4) };
+
+    if let Some(libc_base_addr) = instance.libc.base_addr {
+        info_addr!("Library Base Address", libc_base_addr as usize);
+
+        if let Some(write_fn_addr) = unsafe { find_fn_in_lib(libc_base_addr, djb2_hash!(b"write")) }
+        {
+            instance.libc.write = Some(unsafe { core::mem::transmute(write_fn_addr) });
+        }
+    }
+
+    if let Some(write_fn) = instance.libc.write {
+        let msg = b"[*] Hello, world from write!\n";
+        unsafe { write_fn(1, msg.as_ptr(), msg.len()) };
+    }
+
     info!("HITTING BREAKPOINT");
     unsafe {
         intrinsics::breakpoint();
@@ -120,69 +141,4 @@ fn exit(code: u8) {
     unsafe {
         _ = syscall!(Sysno::exit, code);
     }
-}
-
-fn usize_to_hex_str(num: usize) -> [u8; 18] {
-    let mut buffer = [b'0'; 16]; // Buffer to hold the hex characters
-    let mut value = num;
-    let mut index = 15; // Start from the end of the buffer
-
-    while value > 0 {
-        let digit = (value % 16) as usize; // Get the last hex digit
-        buffer[index] = match digit {
-            0..=9 => b'0' + digit as u8,
-            _ => b'a' + (digit - 10) as u8,
-        };
-        value /= 16; // Move to the next digit
-        index -= 1;
-    }
-
-    let start_index = index + 1; // First valid character index
-
-    // Create a new buffer to store the valid hex characters
-    let mut result = [0u8; 18];
-    result[0] = b'0';
-    result[1] = b'x';
-
-    // Manually copy valid characters to the result buffer to avoid memcpy
-    let mut result_index = 2;
-    for i in start_index..16 {
-        result[result_index] = buffer[i];
-        result_index += 1;
-    }
-
-    result
-}
-
-fn usize_to_int_str(num: usize) -> [u8; 20] {
-    let mut buffer = [b'0'; 20]; // Buffer to hold the integer characters
-    let mut value = num;
-    let mut index = 19; // Start from the end of the buffer
-
-    // Handle the case when num is 0
-    if value == 0 {
-        buffer[index] = b'0';
-        return buffer;
-    }
-
-    // Convert the number to its string representation
-    while value > 0 {
-        let digit = (value % 10) as usize; // Get the last decimal digit
-        buffer[index] = b'0' + digit as u8; // Convert to ASCII
-        value /= 10; // Move to the next digit
-        index -= 1;
-    }
-
-    let start_index = index + 1; // First valid character index
-
-    let mut result = [0u8; 20];
-
-    // Manually copy valid characters to the result buffer to avoid memcpy
-    let mut result_index = 0;
-    for i in start_index..20 {
-        result[result_index] = buffer[i];
-        result_index += 1;
-    }
-
-    result
 }

@@ -7,6 +7,21 @@ pub const INSTANCE_MAGIC: u32 = 0xDEADBEEF;
 
 pub struct Instance {
     pub magic: u32,
+    pub libc: Libc,
+}
+
+pub struct Libc {
+    pub base_addr: Option<*const usize>,
+    pub write: Option<unsafe extern "C" fn(isize, *const u8, usize) -> isize>,
+}
+
+impl Libc {
+    pub fn new() -> Self {
+        Self {
+            base_addr: None,
+            write: None,
+        }
+    }
 }
 
 static INSTANCE: AtomicPtr<Instance> = AtomicPtr::new(ptr::null_mut());
@@ -22,6 +37,7 @@ pub fn instance() -> &'static mut Instance {
         let instance = Box::new(Instance {
             // Initialize your instance fields here
             magic: INSTANCE_MAGIC,
+            libc: Libc::new(),
         });
 
         // Convert Box to raw pointer and attempt to set it atomically
