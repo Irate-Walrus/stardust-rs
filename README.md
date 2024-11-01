@@ -19,7 +19,7 @@ The following targets are supported:
 > [!warning]
 > At the moment `libc.so` is assumed to be compiled for 64-bit so while the `i686` target is supported it'll probably fail in practice.
 
-Following is the current output of `cargo make run` with `TARGET="i686-unknown-linux-gnu"`.
+Following is the current output of `cargo make run` with `TARGET="x86_64-unknown-linux-gnu"`.
 
 ```
 ***     [LOADER]        ***
