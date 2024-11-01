@@ -2,21 +2,6 @@ use core::alloc::{GlobalAlloc, Layout};
 use core::arch::asm;
 use syscalls::{syscall, Sysno};
 
-/*
-#[no_mangle]
-#[link_section = ".data"]
-static mut __rust_no_alloc_shim_is_unstable: u8 = 0;
-
-extern "C" {
-    #[cfg_attr(
-        target_arch = "x86_64",
-        link_name = "\x01.obj.__rust_no_alloc_shim_is_unstable"
-    )]
-    // again we have to declare this as a function to prevent another .refptr symbol from being generated
-    fn __refptr__rust_no_alloc_shim_is_unstable();
-}
-*/
-
 const MAP_ANONYMOUS: u8 = 0x20;
 const MAP_PRIVATE: u8 = 0x02;
 const PROT_READ: u8 = 0x01;
@@ -34,13 +19,18 @@ unsafe impl GlobalAlloc for StardustAllocator {
         //      int fd,
         //      off_t offset
         // );
+        #[cfg(target_arch = "x86_64")]
+        let sysno = Sysno::mmap;
+        #[cfg(target_arch = "x86")]
+        let sysno = Sysno::mmap2;
+
         let result = syscall!(
-            Sysno::mmap,
+            sysno,
             0x0,
             layout.size(),
             (PROT_READ | PROT_WRITE),
             (MAP_PRIVATE | MAP_ANONYMOUS),
-            u64::MAX,
+            usize::MAX,
             0
         );
         result.unwrap() as *mut u8

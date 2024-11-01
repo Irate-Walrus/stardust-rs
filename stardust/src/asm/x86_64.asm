@@ -53,9 +53,3 @@
         mov rax, [rsp] // get the return address
         add rax, 0xa   // get implant end address
         ret            // return to _rip_end
-
-// symbol to truncate to
-.section ".text.end"
-
-    _sym_end:
-        .byte 0x53, 0x54, 0x41, 0x52, 0x44, 0x55, 0x53, 0x54, 0x2D, 0x45, 0x4E, 0x44

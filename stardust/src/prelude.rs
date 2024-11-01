@@ -1,7 +1,10 @@
 use core::arch::{asm, global_asm};
 
 #[cfg(target_arch = "x86_64")]
-global_asm!(include_str!("x86_64.asm"));
+global_asm!(include_str!("./asm/x86_64.asm"));
+
+#[cfg(target_arch = "x86")]
+global_asm!(include_str!("./asm/i686.asm"));
 
 extern "C" {
     static mut _data_offset: usize;
@@ -39,6 +42,38 @@ pub fn rip_end() -> *mut usize {
         asm!(
             "call _rip_end",  // call the assembly function
             "mov {0}, rax",     // move the value in rax to addr
+            out(reg) addr       // output to addr
+        );
+    }
+
+    addr
+}
+
+#[cfg(target_arch = "x86")]
+#[inline(never)]
+pub fn rip_start() -> *mut usize {
+    let addr: *mut usize;
+
+    unsafe {
+        asm!(
+            "call _rip_start",  // call the assembly function
+            "mov {0}, eax",     // move the value in rax to addr
+            out(reg) addr       // output to addr
+        );
+    }
+
+    addr
+}
+
+#[cfg(target_arch = "x86")]
+#[inline(never)]
+pub fn rip_end() -> *mut usize {
+    let addr: *mut usize;
+
+    unsafe {
+        asm!(
+            "call _rip_end",  // call the assembly function
+            "mov {0}, eax",     // move the value in rax to addr
             out(reg) addr       // output to addr
         );
     }

@@ -1,4 +1,4 @@
-# Incomplete Rust PIC Template
+# Rust PIC Template for x86\_64 Linux
 
 > [!warning]
 > This is/was an experiment which I may or may not revisit due to other priorities, described below are the issues I ended up facing.
@@ -12,7 +12,14 @@ This is a PoC targeted at x64 linux and has numerous issues, it is based on the 
 - https://kerkour.com/rust-position-independent-shellcode
 - https://github.com/safedv/Rustic64
 
-Following is the current output of `cargo make run`.
+The following targets are supported:
+- `i686-unknown-linux-gnu`
+- `x86_x64-unknown-linux-gnu`
+
+> [!warning]
+> At the moment `libc.so` is assumed to be compiled for 64-bit so while the `i686` target is supported it'll probably fail in practice.
+
+Following is the current output of `cargo make run` with `TARGET="i686-unknown-linux-gnu"`.
 
 ```
 ***     [LOADER]        ***

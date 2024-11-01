@@ -2,6 +2,12 @@ use std::{mem, ptr};
 
 const SHELLCODE: &[u8] = include_bytes!("../../target/stardust.bin");
 
+#[cfg(target_arch = "x86_64")]
+const SHELLCODE_ADDR: usize = 0x700000000000;
+
+#[cfg(target_arch = "x86")]
+const SHELLCODE_ADDR: usize = 0x70000000;
+
 fn main() {
     println!("***\t[LOADER]\t***");
     println!("[*] Allocate RW Memory");
@@ -36,7 +42,7 @@ fn alloc_rw() -> *mut usize {
 
     let buffer_ptr = unsafe {
         mmap(
-            0x700000000000 as *mut c_void,
+            SHELLCODE_ADDR as *mut c_void, //SHELLCODE_ADDR as *mut c_void,
             SHELLCODE.len(),
             PROT_READ | PROT_WRITE,
             MAP_PRIVATE | MAP_ANONYMOUS,
