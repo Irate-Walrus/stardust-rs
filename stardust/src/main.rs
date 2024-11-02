@@ -15,14 +15,12 @@ use core::str;
 
 use syscalls::{syscall, Sysno};
 
-pub mod instance;
 pub mod stcore;
-pub mod utils;
 
-use instance::instance;
-use instance::Instance;
+use stcore::instance::instance;
+use stcore::instance::Instance;
+use stcore::os::linux::{find_fn_in_lib, find_lib};
 use stcore::*;
-use utils::{find_fn_in_lib, find_lib};
 
 /* These workarounds are required to compile if `alloc::format!` macro is used. */
 /// Workaround for rustc bug: https://github.com/rust-lang/rust/issues/47493

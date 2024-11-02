@@ -1,4 +1,5 @@
 pub mod arch;
+pub mod instance;
 pub mod macros;
 pub mod os;
 
