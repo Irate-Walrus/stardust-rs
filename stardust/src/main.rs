@@ -15,15 +15,13 @@ use core::str;
 
 use syscalls::{syscall, Sysno};
 
-pub mod allocator;
 pub mod instance;
-pub mod prelude;
+pub mod stcore;
 pub mod utils;
 
-use allocator::StardustAllocator;
 use instance::instance;
 use instance::Instance;
-use prelude::*;
+use stcore::*;
 use utils::{find_fn_in_lib, find_lib};
 
 /* These workarounds are required to compile if `alloc::format!` macro is used. */
