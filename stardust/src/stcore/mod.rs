@@ -1,9 +1,10 @@
-mod arch;
-mod os;
+pub mod arch;
+pub mod macros;
+pub mod os;
 
 pub use arch::{rip_end, rip_start};
 
-pub use os::StardustAllocator;
+pub use os::{log_str, StardustAllocator};
 
 extern "C" {
     static mut _data_offset: usize;
