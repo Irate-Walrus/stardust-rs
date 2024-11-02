@@ -1,11 +1,11 @@
-# Rust PIC Template for x86\_64 Linux
+# Rust PIC Template for Linux
 
 > [!warning]
 > This is/was an experiment which I may or may not revisit due to other priorities, described below are the issues I ended up facing.
 > I'm keen to hear of any possible workarounds for these issues, just open a PR.
 
 
-This is a PoC targeted at x64 linux and has numerous issues, it is based on the following previous work:
+This is a PoC targeted at linux and has numerous issues, it is based on the following previous work:
 - https://bruteratel.com/research/feature-update/2021/01/30/OBJEXEC/
 - https://5pider.net/blog/2024/01/27/modern-shellcode-implant-design/
 - https://github.com/wumb0/rust_bof
