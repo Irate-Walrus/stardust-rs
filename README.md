@@ -76,7 +76,6 @@ This results in the `if !piece.is_empty()` check failing within the following co
 /* 1188 */             idx += 1;
 /* 1189 */         }
 /* 1190 */     }
-
 ```
 
 This leads to a call being made to `_gcc_except_table` which has been removed by [linker.ld](./stardust/linker.ld) resulting in a segmentation fault.
