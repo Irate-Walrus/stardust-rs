@@ -8,6 +8,12 @@ const SHELLCODE_ADDR: usize = 0x700000000000;
 #[cfg(target_arch = "x86")]
 const SHELLCODE_ADDR: usize = 0x70000000;
 
+#[cfg(target_arch = "x86_64")]
+const STARDUST_BANNER: &str = "\n***\t[STARDUST x86_64]\t***";
+
+#[cfg(target_arch = "x86")]
+const STARDUST_BANNER: &str = "\n***\t[STARDUST i686]\t***";
+
 fn main() {
     println!("***\t[LOADER]\t***");
     println!("[*] Allocate RW Memory");
@@ -29,7 +35,7 @@ fn main() {
 
     println!("[*] Allocation Size:\t\t{}B", SHELLCODE.len());
 
-    println!("\n***\t[STARDUST]\t***");
+    println!("{}", STARDUST_BANNER);
     let exec: extern "C" fn() -> ! = unsafe { mem::transmute(buffer_ptr) };
     exec();
 }

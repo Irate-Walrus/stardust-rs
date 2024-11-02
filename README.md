@@ -30,7 +30,7 @@ Following is the current output of `cargo make run` with `TARGET="x86_64-unknown
 [*] Allocation End Address:     0x70000000310f
 [*] Allocation Size:            12559B
 
-***     [STARDUST]      ***
+***     [STARDUST x86_64]       ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
 [*] Stardust End Address:       0x70000000310f
@@ -40,9 +40,9 @@ Following is the current output of `cargo make run` with `TARGET="x86_64-unknown
 [*] Stardust GOT Offset:        0x30c8
 [*] Stardust GOT Address:       0x7000000030c8
 [*] Stardust GOT Length:        56
-[*] Stardust Instance:          0x7ff709964000
+[*] Stardust Instance:          0x7f0bb534f000
 [*] Testing memcpy:             SUCCESS
-[*] lib_base_addr:              0x7ff709738000
+[*] Library Base Address:       0x7f0bb5123000
 [*] Hello, world from write!
 [*] HITTING BREAKPOINT
 ```
