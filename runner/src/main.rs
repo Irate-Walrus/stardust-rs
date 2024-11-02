@@ -76,3 +76,13 @@ fn set_rx(ptr: *mut usize) {
         panic!("set allocation RX failed");
     }
 }
+
+#[cfg(target_os = "windows")]
+fn alloc_rw() -> *mut usize {
+    todo!();
+}
+
+#[cfg(target_os = "windows")]
+fn set_rx(ptr: *mut usize) {
+    todo!();
+}

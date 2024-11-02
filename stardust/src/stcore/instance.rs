@@ -7,19 +7,26 @@ pub const INSTANCE_MAGIC: u32 = 0xDEADBEEF;
 
 pub struct Instance {
     pub magic: u32,
-    pub libc: Libc,
+    pub base: Base,
+    #[cfg(target_os = "linux")]
+    pub libc: super::os::linux::libc::Libc,
 }
 
-pub struct Libc {
-    pub base_addr: Option<*const usize>,
-    pub write: Option<unsafe extern "C" fn(isize, *const u8, usize) -> isize>,
+pub struct Base {
+    pub ptr: *const usize,
+    pub len: usize,
 }
 
-impl Libc {
+impl Instance {
     pub fn new() -> Self {
-        Self {
-            base_addr: None,
-            write: None,
+        Instance {
+            magic: INSTANCE_MAGIC,
+            base: Base {
+                ptr: 0x0 as *const usize,
+                len: 0x0,
+            },
+            #[cfg(target_os = "linux")]
+            libc: super::os::linux::libc::Libc::new(),
         }
     }
 }
@@ -28,17 +35,13 @@ static INSTANCE: AtomicPtr<Instance> = AtomicPtr::new(ptr::null_mut());
 
 /// Get or create new stardust instance in memory.
 /// This feels very wrong and is definitely not thread-safe.
-pub fn instance() -> &'static mut Instance {
+pub fn init(instance: Instance) -> &'static mut Instance {
     // Try to load the instance
     let ptr = INSTANCE.load(Ordering::Acquire);
 
     // If the instance is not initialized, we create it
     if ptr.is_null() {
-        let instance = Box::new(Instance {
-            // Initialize your instance fields here
-            magic: INSTANCE_MAGIC,
-            libc: Libc::new(),
-        });
+        let instance = Box::new(instance);
 
         // Convert Box to raw pointer and attempt to set it atomically
         let new_ptr = Box::into_raw(instance);
