@@ -3,8 +3,11 @@ skip_core_tasks = true
 default_to_workspace = false
 
 [env]
-TARGET = "x86_64-unknown-linux-gnu"
-STARDUST_PIC_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/scripts/linux.ld -C link-arg=-Wl,-Map=./target/stardust.map"
+DEFAULT_TARGET = "x86_64-unknown-linux-gnu"
+"TARGET" = { value = "${DEFAULT_TARGET}", condition = { env_not_set = [
+	"TARGET",
+] } }
+STARDUST_PIC_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -C link-arg=-Wl,-Map=./target/stardust.map"
 STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/scripts/linux.test.ld"
 
 [tasks.default]
@@ -25,7 +28,7 @@ description = "Build stardust."
 command = "cargo"
 args = [
 	"build",
-	"-v",
+	#	"-v",
 	"--package=stardust",
 	"--release",
 	"--target",
