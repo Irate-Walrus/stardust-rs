@@ -7,9 +7,9 @@ const MAP_PRIVATE: u8 = 0x02;
 const PROT_READ: u8 = 0x01;
 const PROT_WRITE: u8 = 0x02;
 
-pub struct StardustAllocator;
+pub struct StLinuxAllocator;
 
-unsafe impl GlobalAlloc for StardustAllocator {
+unsafe impl GlobalAlloc for StLinuxAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         // void *mmap(
         //      void *addr,

@@ -4,7 +4,7 @@ mod allocator;
 pub mod libc;
 mod loadlib;
 
-pub use allocator::StardustAllocator;
+pub use allocator::StLinuxAllocator;
 pub use loadlib::{find_fn_in_lib, find_lib};
 
 use crate::{data_offset, epilogue_offset, got_offset};
