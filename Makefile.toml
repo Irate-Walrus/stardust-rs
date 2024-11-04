@@ -7,8 +7,8 @@ DEFAULT_TARGET = "x86_64-unknown-linux-gnu"
 "TARGET" = { value = "${DEFAULT_TARGET}", condition = { env_not_set = [
 	"TARGET",
 ] } }
-STARDUST_PIC_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -C link-arg=-Wl,-Map=./target/stardust.map"
-STARDUST_NOPIC_RUSTFLAGS = "-C link-arg=-nostdlib -C link-arg=-nostartfiles -C link-arg=-static -C link-arg=-fno-ident -C link-arg=-Wl,--gc-sections,--build-id=none -C link-arg=-falign-labels=1 -C link-arg=-Wall -C link-arg=-fno-asynchronous-unwind-tables -C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/scripts/linux.test.ld"
+LINUX_PIC_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -C link-arg=-Wl,-Map=./target/stardust.map"
+LINUX_NOPIC_RUSTFLAGS = "-C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/scripts/linux.test.ld"
 
 [tasks.default]
 description = "Default task that builds the project."
@@ -34,7 +34,7 @@ args = [
 	"--target",
 	"${TARGET}",
 ]
-env = { "RUSTFLAGS" = "${STARDUST_PIC_RUSTFLAGS}" }
+env = { "RUSTFLAGS" = "${LINUX_PIC_RUSTFLAGS}" }
 
 [tasks.build-nopic]
 description = "Clean, build stardust, build runner."
@@ -44,7 +44,7 @@ dependencies = ["clean", "build-stardust-nopic"]
 description = "Build stardust."
 command = "cargo"
 args = ["build", "--package=stardust", "--target", "${TARGET}"]
-env = { "RUSTFLAGS" = "${STARDUST_NOPIC_RUSTFLAGS}" }
+env = { "RUSTFLAGS" = "${LINUX_NOPIC_RUSTFLAGS}" }
 
 [tasks.run-nopic]
 description = "Run startdust as PIC"
