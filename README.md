@@ -16,8 +16,10 @@ The following targets are supported:
 - `i686-unknown-linux-gnu`
 - `x86_x64-unknown-linux-gnu`
 
+Targets can be set using: `cargo make --env TARGET=i686-unknown-linux-gnu run`
+
 > [!warning]
-> At the moment `libc.so` is assumed to be compiled for 64-bit so while the `i686` target is supported it'll probably fail in practice.
+> At the moment `libc.so` is assumed to be compiled for 64-bit so while the `i686` target is supported it will fail to locate `write` in the 32-bit `libc.so`.
 
 Following is the current output of `cargo make run` with `TARGET="x86_64-unknown-linux-gnu"`.
 
