@@ -1,4 +1,4 @@
-use core::ffi::CStr;
+use core::{ffi::CStr, intrinsics::breakpoint};
 use syscalls::{syscall, Sysno};
 
 define_djb2_hash_fn!(runtime_djb2_hash);
@@ -20,7 +20,7 @@ pub unsafe fn close(fd: usize) -> usize {
 
 pub unsafe fn find_lib(sym_hash: u32, sym_len: usize) -> Option<*const usize> {
     let path = b"/proc/self/maps\0";
-    let mut buffer = [0u8; 1024];
+    let mut buffer = [0u8; 4096];
 
     // Open /proc/self/maps
     let fd = unsafe { open(path.as_ptr(), 0) };
