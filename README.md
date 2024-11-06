@@ -1,4 +1,4 @@
-# Rust PIC Template for Linux
+# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux
 
 > [!warning]
 > This is/was an experiment which I may or may not revisit due to other priorities, described below are the issues I ended up facing.
@@ -16,12 +16,8 @@ The following targets are supported:
 - `i686-unknown-linux-gnu`
 - `x86_x64-unknown-linux-gnu`
 
-Targets can be set using: `cargo make --env TARGET=i686-unknown-linux-gnu run`
 
-> [!warning]
-> At the moment `libc.so` is assumed to be compiled for 64-bit so while the `i686` target is supported it will fail to locate `write` in the 32-bit `libc.so`.
-
-Following is the current output of `cargo make run` with `TARGET="x86_64-unknown-linux-gnu"`.
+Following is the current output of `cargo make --env TARGET="x86_64-unknown-linux-gnu run`:
 
 ```
 ***     [LOADER]        ***
@@ -85,7 +81,7 @@ This leads to a call being made to `_gcc_except_table` which has been removed by
 
 **Solution**: None
 
-## Problem #2 - Global Offset Table (GOT)
+## (Solved) Problem #2 - Global Offset Table (GOT)
 
 A bunch of stuff uses the GOT including calls to functions with the `compiler_builtins` crate, e.g. the following functions:
 - `memcpy`
@@ -102,11 +98,11 @@ Similarly using `extern "C"` functions directly may result in the use the GOT.
 The following code was used to ensure `memcpy` was required by the binary:
 
 ```rust
-let src = alloc::string::String::from("Hello, world!");
-let mut dst: String = src.chars().rev().collect();
-dst.push('\n');
-print(&dst);
+let src = alloc::string::String::from("SSECCUS\t\t:ypcmem gnitseT");
+let dst: String = src.chars().rev().collect();
+info!(&dst);
 ```
+
 Patching the hardcoded addresses with GDB results in a successful execution as seen below:
 
 ![Patching `memcpy` address in GOT with GDB](./docs/patching-memcpy-addr.png)
@@ -114,9 +110,3 @@ Patching the hardcoded addresses with GDB results in a successful execution as s
 **Solution**:
 - Patch the GOT dynamically during runtime, this appears to allow the use of `compiler_builtins`!
 - Don't directly call `extern` functions before patching, call them within `asm!` macro
-
-## Problem #4 `.bss.__rust_no_alloc_shim_is_unstable`
-
-Haven't worked out what exactly this symbol is supposed to do, funnily enough memory allocations appeared to work fine without fiddling with it.
-
-**Solution**: Ignore it until it breaks something
