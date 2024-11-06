@@ -1,6 +1,12 @@
 use core::{ffi::CStr, intrinsics::breakpoint};
 use syscalls::{syscall, Sysno};
 
+#[cfg(target_pointer_width = "64")]
+pub use goblin::elf64 as elf;
+
+#[cfg(target_pointer_width = "32")]
+pub use goblin::elf32 as elf;
+
 define_djb2_hash_fn!(runtime_djb2_hash);
 
 // Opens a file using the `open` syscall
@@ -54,7 +60,7 @@ pub fn find_lib_in_proc_map(buffer: &[u8], sym_hash: u32, sym_len: usize) -> Opt
 }
 
 pub unsafe fn find_fn_in_lib(lib_base: *const usize, sym_hash: u32) -> Option<*const usize> {
-    let elf_header = lib_base as *const Elf64_Ehdr;
+    let elf_header = lib_base as *const elf::header::Header;
     let program_header_offset = (*elf_header).e_phoff as usize;
     // This would allow me to calulate the length of Elf64_Sym[]
     let _section_header_offset = (*elf_header).e_shoff as usize;
@@ -66,22 +72,22 @@ pub unsafe fn find_fn_in_lib(lib_base: *const usize, sym_hash: u32) -> Option<*c
 
     //info_int!("num_headers", num_headers);
     for i in 0..num_headers {
-        let program_header =
-            (lib_base as usize + program_header_offset + i * header_size) as *const Elf64_Phdr;
+        let program_header = (lib_base as usize + program_header_offset + i * header_size)
+            as *const elf::program_header::ProgramHeader;
 
         // info_addr!("program_header", program_header);
         // p_type, identifies the type of segment
         if (*program_header).p_type == 2 {
             // PT_DYNAMIC, dynamic linking tables
             let dyn_section = (*program_header).p_vaddr as usize + lib_base as usize;
-            let mut dyn_entry = dyn_section as *const Elf64_Dyn;
+            let mut dyn_entry = dyn_section as *const elf::dynamic::Dyn;
             // info_addr!("dyn_entry", dyn_entry);
 
             // DT_NULL, marks the end of the dynamic array(maybe?)
             while (*dyn_entry).d_tag != 0 {
                 match (*dyn_entry).d_tag {
-                    5 => dynstr_addr = (*dyn_entry).d_un as usize, // DT_STRTAB, address of the dynamic string table
-                    6 => dynsym_addr = (*dyn_entry).d_un as usize, // DT_SYMTAB, address of the dynamic symbol table
+                    5 => dynstr_addr = (*dyn_entry).d_val as usize, // DT_STRTAB, address of the dynamic string table
+                    6 => dynsym_addr = (*dyn_entry).d_val as usize, // DT_SYMTAB, address of the dynamic symbol table
                     _ => {}
                 }
                 dyn_entry = dyn_entry.add(1);
@@ -96,7 +102,7 @@ pub unsafe fn find_fn_in_lib(lib_base: *const usize, sym_hash: u32) -> Option<*c
 
     // info_addr!("dynsym_addr", dynsym_addr);
     // info_addr!("dynstr_addr", dynstr_addr);
-    let mut sym = dynsym_addr as *const Elf64_Sym;
+    let mut sym = dynsym_addr as *const elf::sym::Sym;
     // st_name, contains the offset, in bytes, to the symbol name, relative to the
     // start of the symbol string table. If this field contains zero, the symbol has
     // no name
@@ -117,55 +123,4 @@ pub unsafe fn find_fn_in_lib(lib_base: *const usize, sym_hash: u32) -> Option<*c
     }
 
     None
-}
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct Elf64_Dyn {
-    pub d_tag: i64,
-    // union of both {d_val, d_ptr}
-    pub d_un: u64,
-}
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct Elf64_Ehdr {
-    pub e_ident: [u8; 16],
-    pub e_type: u16,
-    pub e_machine: u16,
-    pub e_version: u32,
-    pub e_entry: u64,
-    pub e_phoff: u64,
-    pub e_shoff: u64,
-    pub e_flags: u32,
-    pub e_ehsize: u16,
-    pub e_phentsize: u16,
-    pub e_phnum: u16,
-    pub e_shentsize: u16,
-    pub e_shnum: u16,
-    pub e_shstrndx: u16,
-}
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct Elf64_Phdr {
-    pub p_type: u32,
-    pub p_flags: u32,
-    pub p_offset: u64,
-    pub p_vaddr: u64,
-    pub p_paddr: u64,
-    pub p_filesz: u64,
-    pub p_memsz: u64,
-    pub p_align: u64,
-}
-
-#[allow(non_camel_case_types)]
-#[repr(C)]
-pub struct Elf64_Sym {
-    pub st_name: u32,
-    pub st_info: u8,
-    pub st_other: u8,
-    pub st_shndx: u16,
-    pub st_value: u64,
-    pub st_size: u64,
 }
