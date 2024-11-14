@@ -5,10 +5,9 @@ default_to_workspace = false
 [env]
 DEFAULT_TARGET = "x86_64-unknown-linux-gnu"
 "TARGET" = { value = "${DEFAULT_TARGET}", condition = { env_not_set = [
-	"TARGET",
+    "TARGET",
 ] } }
-LINUX_PIC_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -C link-arg=-Wl,-Map=./target/stardust.map"
-LINUX_NOPIC_RUSTFLAGS = "-C relocation-model=pic -C link-arg=-Wl,-e_start -C link-arg=-T./stardust/scripts/linux.test.ld"
+EXECUTABLE_EXTENSION = { source = "${TARGET}", default_value = "", mapping = { "x86_64-unknown-linux-gnu" = "", "i686-unknown-linux-gnu" = "", "x86_64-pc-windows-gnu" = ".exe", "i686-pc-windows-gnu" = ".exe" } }
 
 [tasks.default]
 description = "Default task that builds the project."
@@ -16,46 +15,43 @@ dependencies = ["build"]
 
 [tasks.build]
 description = "Clean, build stardust, build runner."
-dependencies = ["clean", "build-stardust-pic", "objcopy", "build-runner"]
+dependencies = ["clean", "build-stardust", "objcopy", "build-runner"]
 
 [tasks.run]
 description = "Run startdust as PIC"
 dependencies = ["build"]
-command = "./target/${TARGET}/debug/runner"
+command = "./target/${TARGET}/debug/runner${EXECUTABLE_EXTENSION}"
 
-[tasks.build-stardust-pic]
+[tasks.build-stardust]
 description = "Build stardust."
-command = "cargo"
-args = [
-	"build",
-	#	"-v",
-	"--package=stardust",
-	"--release",
-	"--target",
-	"${TARGET}",
-]
-env = { "RUSTFLAGS" = "${LINUX_PIC_RUSTFLAGS}" }
+script = '''
+#!/usr/bin/env bash
 
-[tasks.build-nopic]
-description = "Clean, build stardust, build runner."
-dependencies = ["clean", "build-stardust-nopic"]
+if [[ "$TARGET" == *windows* ]]; then
+    export RUSTFLAGS="-C codegen-units=1
+                      -C link-arg=-fpack-struct=8
+                      -C link-arg=-falign-jumps=1
+                      -C link-arg=-w
+                      -C relocation-model=pic
+                      -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup
+                      -C link-arg=-Wl,--subsystem,console
+                      -C link-arg=-Wl,-T./stardust/scripts/windows.ld
+                      -C opt-level=3";
+elif [[ "$TARGET" == *linux* ]]; then
+    export RUSTFLAGS="-C link-arg=-Wl,--verbose
+       	              -C relocation-model=pic
+                      -C link-arg=-T./stardust/scripts/linux.ld";
+else
+	echo "Target $TARGET unsupported this will break..."
+fi
 
-[tasks.build-stardust-nopic]
-description = "Build stardust."
-command = "cargo"
-args = ["build", "--package=stardust", "--target", "${TARGET}"]
-env = { "RUSTFLAGS" = "${LINUX_NOPIC_RUSTFLAGS}" }
-
-[tasks.run-nopic]
-description = "Run startdust as PIC"
-dependencies = ["build-nopic"]
-command = "./target/${TARGET}/debug/stardust"
+cargo build --package=stardust --release --target ${TARGET}
+'''
 
 [tasks.build-runner]
 description = "Build runner."
 command = "cargo"
 args = ["build", "--package=runner", "--target", "${TARGET}"]
-env = { "RUSTFLAGS" = "" }
 
 [tasks.clean]
 description = "Cleans the project."
@@ -63,34 +59,32 @@ script = ["cargo clean", "rm -f ./target"]
 
 [tasks.objcopy]
 description = "Copy .text section of the binary to stardust.bin."
-command = "objcopy"
-args = [
-	"-O",
-	"binary",
-	"-j",
-	".text",
-	"target/${TARGET}/release/stardust",
-	"target/stardust.bin",
-]
+script = '''
+#!/usr/bin/env bash
+
+objcopy -O binary -j .text target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION} target/stardust.bin
+
+echo "Stardust Size: $(stat --format="%s" target/stardust.bin | numfmt --from=auto --to=iec-i --suffix=B)"
+'''
 
 [tasks.objdump]
 description = "Dumps stardust to stdout using objdump."
 command = "objdump"
 args = [
-	"-dzrWC",
-	"-mi386",
-	"-Mx86-64",
-	"-Mintel",
-	"-j",
-	".text",
-	"-z",
-	"target/${TARGET}/release/stardust",
+    "-dzrWC",
+    "-mi386",
+    "-Mx86-64",
+    "-Mintel",
+    "-j",
+    ".text",
+    "-z",
+    "target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION}",
 ]
 
 [tasks.debug]
 description = "Debug stardust pic."
 command = "rust-gdb"
-args = ["target/${TARGET}/debug/runner"]
+args = ["target/${TARGET}/debug/runner${EXECUTABLE_EXTENSION}"]
 
 [tasks.r2-bin]
 description = "Analyze stardust bin w/ r2."
@@ -100,4 +94,8 @@ args = ["-AA", "target/stardust.bin"]
 [tasks.r2]
 description = "Analyze stardust bin w/ r2."
 command = "r2"
-args = ["-e bin.relocs.apply=true", "-AA", "target/${TARGET}/release/stardust"]
+args = [
+    "-e bin.relocs.apply=true",
+    "-AA",
+    "target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION}",
+]

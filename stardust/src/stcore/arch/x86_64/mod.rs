@@ -7,7 +7,6 @@ global_asm!(include_str!("x86_64.asm"));
     This would be painful to deal with, so lets just create those functions in Rust
 */
 
-#[cfg(target_arch = "x86_64")]
 #[inline(never)]
 pub fn rip_start() -> *mut usize {
     let addr: *mut usize;
@@ -23,7 +22,6 @@ pub fn rip_start() -> *mut usize {
     addr
 }
 
-#[cfg(target_arch = "x86_64")]
 #[inline(never)]
 pub fn rip_end() -> *mut usize {
     let addr: *mut usize;

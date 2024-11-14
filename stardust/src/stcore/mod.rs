@@ -5,7 +5,9 @@ pub mod os;
 
 pub use arch::{rip_end, rip_start};
 
-pub use os::{log_str, StardustAllocator};
+pub use os::{initialize, log_str, StardustAllocator};
+
+pub use instance::{Instance, INSTANCE};
 
 extern "C" {
     static mut _data_offset: usize;

@@ -1,4 +1,4 @@
-use core::{ffi::CStr, intrinsics::breakpoint};
+use core::ffi::CStr;
 use syscalls::{syscall, Sysno};
 
 #[cfg(target_pointer_width = "64")]

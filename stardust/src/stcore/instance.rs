@@ -10,6 +10,12 @@ pub struct Instance {
     pub base: Base,
     #[cfg(target_os = "linux")]
     pub libc: super::os::linux::libc::Libc,
+    #[cfg(target_os = "windows")]
+    pub ntdll: super::os::windows::ntdll::Ntdll,
+    #[cfg(target_os = "windows")]
+    pub kernel32: super::os::windows::kernel32::Kernel32,
+    #[cfg(target_os = "windows")]
+    pub heap_handle: *const usize,
 }
 
 pub struct Base {
@@ -27,36 +33,48 @@ impl Instance {
             },
             #[cfg(target_os = "linux")]
             libc: super::os::linux::libc::Libc::new(),
+            #[cfg(target_os = "windows")]
+            ntdll: super::os::windows::ntdll::Ntdll::new(),
+            #[cfg(target_os = "windows")]
+            kernel32: super::os::windows::kernel32::Kernel32::new(),
+            #[cfg(target_os = "windows")]
+            heap_handle: ptr::null(),
         }
     }
-}
 
-static INSTANCE: AtomicPtr<Instance> = AtomicPtr::new(ptr::null_mut());
+    /// Initializes the global INSTANCE with a provided stack-initialized instance.
+    /// This should only be called once.
+    pub fn from_local(local_instance: Instance) {
+        let ptr = INSTANCE.load(Ordering::Acquire);
 
-/// Get or create new stardust instance in memory.
-/// This feels very wrong and is definitely not thread-safe.
-pub fn init(instance: Instance) -> &'static mut Instance {
-    // Try to load the instance
-    let ptr = INSTANCE.load(Ordering::Acquire);
+        // If the instance is not initialized, we create it
+        if ptr.is_null() {
+            let instance = Box::new(local_instance);
 
-    // If the instance is not initialized, we create it
-    if ptr.is_null() {
-        let instance = Box::new(instance);
-
-        // Convert Box to raw pointer and attempt to set it atomically
-        let new_ptr = Box::into_raw(instance);
-        match INSTANCE.compare_exchange(ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire) {
-            Ok(_) => {} // Successfully set the new pointer
-            Err(_) => {
-                // If there was an existing instance, we need to drop the new one
-                // We must convert the raw pointer into Box so that it is dropped
-                unsafe {
-                    drop(Box::from_raw(new_ptr));
+            // Convert Box to raw pointer and attempt to set it atomically
+            let new_ptr = Box::into_raw(instance);
+            match INSTANCE.compare_exchange(ptr, new_ptr, Ordering::AcqRel, Ordering::Acquire) {
+                Ok(_) => {} // Successfully set the new pointer
+                Err(_) => {
+                    // If there was an existing instance, we need to drop the new one
+                    // We must convert the raw pointer into Box so that it is dropped
+                    unsafe {
+                        drop(Box::from_raw(new_ptr));
+                    }
                 }
             }
         }
     }
 
-    // Return the initialized instance
-    unsafe { &mut *INSTANCE.load(Ordering::Acquire) }
+    pub fn get() -> Option<&'static mut Self> {
+        let ptr = INSTANCE.load(Ordering::Acquire);
+
+        if ptr.is_null() {
+            return None;
+        }
+
+        unsafe { Some(&mut *ptr) }
+    }
 }
+
+pub static INSTANCE: AtomicPtr<Instance> = AtomicPtr::new(ptr::null_mut());

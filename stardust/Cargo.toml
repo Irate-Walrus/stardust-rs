@@ -10,4 +10,4 @@ syscalls = { version = "0.6.18", default-features = false, features = [
 	"x86_64",
 ] }
 djb2_macro = { path = "../djb2_macro" }
-goblin = { version = "0.9.2", default-features = false, features = ["elf32", "elf64"] }
+goblin = { version = "0.9.2", default-features = false, features = ["elf32", "elf64", "pe32", "pe64"] }

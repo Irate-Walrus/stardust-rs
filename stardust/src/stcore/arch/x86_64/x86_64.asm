@@ -24,7 +24,7 @@
         mov   rsi, rsp
         and   rsp, 0xFFFFFFFFFFFFFFF0
         sub   rsp, 0x20
-        call  main
+        call  stmain
         mov   rsp, rsi
         pop   rsi
         ret

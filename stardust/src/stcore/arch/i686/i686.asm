@@ -24,7 +24,7 @@
         mov    esi, esp          // store current esp in esi
         and    esp, 0xFFFFFFF0   // align esp to 16 bytes
         sub    esp, 0x10         // allocate stack space for alignment
-        call   main              // call the main function
+        call   stmain            // call the main function
         mov    esp, esi          // restore esp
         pop    esi               // restore esi
         ret

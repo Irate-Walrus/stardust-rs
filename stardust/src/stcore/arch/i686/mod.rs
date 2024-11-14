@@ -1,6 +1,5 @@
 use core::arch::{asm, global_asm};
 
-#[cfg(target_arch = "x86")]
 global_asm!(include_str!("i686.asm"));
 
 #[inline(never)]

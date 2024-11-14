@@ -37,9 +37,8 @@ macro_rules! info_int {
 #[macro_export]
 macro_rules! info {
     ($s:expr) => {
-        $crate::stcore::log_str("[*] ");
-        $crate::stcore::log_str($s);
-        $crate::stcore::log_str("\n");
+        let s = concat!("[*] ", $s, "\n");
+        $crate::stcore::log_str(s);
     };
 }
 
