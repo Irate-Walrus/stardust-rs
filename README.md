@@ -1,11 +1,10 @@
-# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux
+# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux & x86_64 Windows
 
 > [!warning]
-> This is/was an experiment which I may or may not revisit due to other priorities, described below are the issues I ended up facing.
+> This is/was an experiment and I can personally garantee it is unsafe. I describe below some of the unobvious (to me) issues I ended up facing.
 > I'm keen to hear of any possible workarounds for these issues, just open a PR.
 
-
-This is a PoC targeted at linux and has numerous issues, it is based on the following previous work:
+This code is based on the following previous work:
 - https://bruteratel.com/research/feature-update/2021/01/30/OBJEXEC/
 - https://5pider.net/blog/2024/01/27/modern-shellcode-implant-design/
 - https://github.com/wumb0/rust_bof
@@ -15,7 +14,7 @@ This is a PoC targeted at linux and has numerous issues, it is based on the foll
 The following targets are supported:
 - `i686-unknown-linux-gnu`
 - `x86_x64-unknown-linux-gnu`
-
+- `x86_64-pc-windows-gnu`
 
 Following is the current output of `cargo make --env TARGET="x86_64-unknown-linux-gnu run`:
 
@@ -25,24 +24,15 @@ Following is the current output of `cargo make --env TARGET="x86_64-unknown-linu
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
 [*] Allocation Start Address:   0x700000000000
-[*] Allocation End Address:     0x70000000310f
-[*] Allocation Size:            12559B
+[*] Allocation End Address:     0x700000003107
+[*] Allocation Size:            12551B
 
 ***     [STARDUST x86_64]       ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
-[*] Stardust End Address:       0x70000000310f
-[*] Stardust Length:            12559
-[*] Stardust Data Offset:       0x3000
-[*] Stardust Data Address:      0x700000003000
-[*] Stardust GOT Offset:        0x30c8
-[*] Stardust GOT Address:       0x7000000030c8
-[*] Stardust GOT Length:        56
-[*] Stardust Instance:          0x7f0bb534f000
-[*] Testing memcpy:             SUCCESS
-[*] Library Base Address:       0x7f0bb5123000
-[*] Hello, world from write!
-[*] HITTING BREAKPOINT
+[*] Stardust Length:            12551
+[*] Stardust Instance:          0x7f66cc115000
+[*] Hitting Breakpoint!
 ```
 
 ## Problem #1 - `format!` macro e.g. `&'static &str`
@@ -78,6 +68,8 @@ This results in the `if !piece.is_empty()` check failing within the following co
 
 This leads to a call being made to `_gcc_except_table` which has been removed by [linker.ld](./stardust/linker.ld) resulting in a segmentation fault.
 
+> [!note]
+> Patching the GOT appeared to get us a little further along before it crashes. YAY!🥳
 
 **Solution**: None
 
