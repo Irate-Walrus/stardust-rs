@@ -2,7 +2,7 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 
 pub struct Ntdll {
-    pub base_addr: *const usize,
+    pub base_addr: *mut c_void,
     pub rtl_create_heap: RtlCreateHeap,
     pub rtl_allocate_heap: RtlAllocateHeap,
     pub rtl_free_heap: RtlFreeHeap,

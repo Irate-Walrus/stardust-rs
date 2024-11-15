@@ -2,7 +2,7 @@ use core::ffi::c_void;
 use core::ptr::null_mut;
 
 pub struct Kernel32 {
-    pub base_addr: *const usize,
+    pub base_addr: *mut c_void,
     pub output_debug_string_a: OutputDebugStringA,
     pub output_debug_string_w: OutputDebugStringW,
     pub write_file: WriteFile,

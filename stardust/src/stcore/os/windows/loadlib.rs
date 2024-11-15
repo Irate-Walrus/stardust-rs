@@ -1,10 +1,35 @@
-use super::ntpeb::{find_peb, ImageNtHeaders, LoaderDataTableEntry, PebLoaderData};
-
-use core::ptr;
-use goblin;
+use core::arch::asm;
+use core::{ffi::c_void, ptr};
+use phnt::ffi::{
+    IMAGE_DOS_HEADER, PIMAGE_EXPORT_DIRECTORY, PIMAGE_NT_HEADERS64, PLDR_DATA_TABLE_ENTRY, PPEB,
+    PPEB_LDR_DATA,
+};
 
 define_djb2_hash_fn!(rt_djb2_hash);
 
+#[cfg(target_arch = "x86_64")]
+pub fn find_peb() -> PPEB {
+    let peb_ptr: PPEB;
+    unsafe {
+        asm!(
+        "mov {}, gs:[0x60]",
+        out(reg) peb_ptr
+        );
+    }
+    peb_ptr
+}
+
+#[cfg(target_arch = "x86")]
+pub fn find_peb() -> PPEB32 {
+    let peb_ptr: PPEB32;
+    unsafe {
+        asm!(
+        "mov {}, gs:[0x30]",
+        out(reg) peb_ptr
+        );
+    }
+    peb_ptr
+}
 /// Retrieves the NT headers from the base address of a module.
 ///
 /// # Arguments
@@ -12,22 +37,19 @@ define_djb2_hash_fn!(rt_djb2_hash);
 ///
 /// Returns a pointer to `ImageNtHeaders` or null if the headers are invalid.
 #[cfg(target_arch = "x86_64")]
-pub unsafe fn get_nt_headers(base_addr: *const usize) -> *const ImageNtHeaders {
-    use super::ntpeb::ImageNtHeaders;
-
-    let dos_header = base_addr as *const goblin::pe::header::DosHeader;
+pub unsafe fn get_nt_headers(base_addr: *mut c_void) -> PIMAGE_NT_HEADERS64 {
+    let dos_header = base_addr as *const IMAGE_DOS_HEADER;
 
     // Check if the DOS signature is valid (MZ)
-    if (*dos_header).signature != goblin::pe::header::DOS_MAGIC {
+    if (*dos_header).e_magic != 0x5A4D {
         return ptr::null_mut();
     }
 
     // Calculate the address of NT headers
-    let nt_headers = base_addr.add((*dos_header).pe_pointer as usize / size_of::<usize>())
-        as *const ImageNtHeaders;
+    let nt_headers = base_addr.byte_add((*dos_header).e_lfanew as usize) as PIMAGE_NT_HEADERS64;
 
     // Check if the NT signature is valid (PE\0\0)
-    if (*nt_headers).signature != goblin::pe::header::PE_MAGIC {
+    if (*nt_headers).Signature != 0x4550 {
         return ptr::null_mut();
     }
 
@@ -40,37 +62,36 @@ pub unsafe fn get_nt_headers(base_addr: *const usize) -> *const ImageNtHeaders {
 /// * `module_hash` - The hash of the module name to locate.
 ///
 /// Returns the base address of the module or null if not found.
-pub unsafe fn ldr_module(module_hash: u32) -> *mut usize {
+pub unsafe fn ldr_module(module_hash: u32) -> *mut c_void {
     let peb = find_peb(); // Retrieve the PEB (Process Environment Block)
 
     if peb.is_null() {
         return ptr::null_mut();
     }
 
-    let peb_ldr_data_ptr = (*peb).loader_data as *mut PebLoaderData;
+    let peb_ldr_data_ptr = (*peb).Ldr as PPEB_LDR_DATA;
     if peb_ldr_data_ptr.is_null() {
         return ptr::null_mut();
     }
 
     // Start with the first module in the InLoadOrderModuleList
-    let mut module_list =
-        (*peb_ldr_data_ptr).in_load_order_module_list.flink as *mut LoaderDataTableEntry;
+    let mut module_list = (*peb_ldr_data_ptr).InLoadOrderModuleList.Flink as PLDR_DATA_TABLE_ENTRY;
 
     // Iterate through the list of loaded modules
-    while !(*module_list).dll_base.is_null() {
-        let dll_buffer_ptr = (*module_list).base_dll_name.buffer;
-        let dll_length = (*module_list).base_dll_name.length as usize;
+    while !(*module_list).DllBase.is_null() {
+        let dll_buffer_ptr = (*module_list).BaseDllName.Buffer;
+        let dll_length = (*module_list).BaseDllName.Length as usize;
 
         // Create a slice from the DLL name
         let dll_name_slice = core::slice::from_raw_parts(dll_buffer_ptr as *const u8, dll_length);
 
         // Compare the hash of the DLL name with the provided hash
         if module_hash == rt_djb2_hash(dll_name_slice) {
-            return (*module_list).dll_base as _; // Return the base address of the module if the hash matches
+            return (*module_list).DllBase; // Return the base address of the module if the hash matches
         }
 
         // Move to the next module in the list
-        module_list = (*module_list).in_load_order_links.flink as *mut LoaderDataTableEntry;
+        module_list = (*module_list).InLoadOrderLinks.Flink as PLDR_DATA_TABLE_ENTRY;
     }
 
     ptr::null_mut() // Return null if no matching module is found
@@ -83,7 +104,7 @@ pub unsafe fn ldr_module(module_hash: u32) -> *mut usize {
 /// * `function_hash` - The hash of the function name to locate.
 ///
 /// Returns the function's address or null if not found.
-pub unsafe fn ldr_function(module_base: *const usize, function_hash: u32) -> *const usize {
+pub unsafe fn ldr_function(module_base: *mut c_void, function_hash: u32) -> *mut c_void {
     let p_img_nt_headers = get_nt_headers(module_base); // Retrieve NT headers for the module
 
     if p_img_nt_headers.is_null() {
@@ -91,25 +112,25 @@ pub unsafe fn ldr_function(module_base: *const usize, function_hash: u32) -> *co
     }
 
     // Get the export directory from the NT headers
-    let optional_header = &(*p_img_nt_headers).optional_header;
+    let optional_header = &(*p_img_nt_headers).OptionalHeader;
 
     // Assuming IMAGE_DIRECTORY_ENTRY_EXPORT is 0
-    let data_dir = &(*optional_header).data_directory[0];
+    let data_dir = &(*optional_header).DataDirectory[0];
 
-    let export_dir_table = module_base.byte_add(data_dir.virtual_address as usize)
-        as *const goblin::pe::export::ExportDirectoryTable;
+    let export_dir_table =
+        module_base.byte_add(data_dir.VirtualAddress as usize) as PIMAGE_EXPORT_DIRECTORY;
 
     if export_dir_table.is_null() {
         return ptr::null_mut();
     }
 
-    let entry_len = (*export_dir_table).address_table_entries as usize;
+    let entry_len = (*export_dir_table).NumberOfNames as usize;
     let names_addr =
-        module_base.byte_add((*export_dir_table).name_pointer_rva as usize) as *const u32;
+        module_base.byte_add((*export_dir_table).AddressOfNames as usize) as *const u32;
     let addresses_addr =
-        module_base.byte_add((*export_dir_table).export_address_table_rva as usize) as *const u32;
+        module_base.byte_add((*export_dir_table).AddressOfFunctions as usize) as *const u32;
     let ordinals_addr =
-        module_base.byte_add((*export_dir_table).ordinal_table_rva as usize) as *const u16;
+        module_base.byte_add((*export_dir_table).AddressOfNameOrdinals as usize) as *const u16;
 
     // Create slices from the export directory arrays
     let names = core::slice::from_raw_parts(names_addr, entry_len);
@@ -128,7 +149,7 @@ pub unsafe fn ldr_function(module_base: *const usize, function_hash: u32) -> *co
         if function_hash as u32 == rt_djb2_hash(name_slice) {
             // Retrieve the function's address by its ordinal
             let ordinal = ordinals[i] as usize;
-            return module_base.byte_add(functions[ordinal] as usize) as *mut usize;
+            return module_base.byte_add(functions[ordinal] as usize);
         }
     }
 

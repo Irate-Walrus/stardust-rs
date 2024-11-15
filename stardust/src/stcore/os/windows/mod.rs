@@ -2,7 +2,6 @@ mod allocator;
 pub mod kernel32;
 mod loadlib;
 pub mod ntdll;
-mod ntpeb;
 
 pub use allocator::StWindowsAllocator;
 pub use loadlib::{ldr_function, ldr_module};
