@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use core::ffi::c_void;
 use core::sync::atomic::Ordering;
 use syscalls::{syscall, Sysno};
 
@@ -32,24 +33,24 @@ pub unsafe fn write(fd: usize, buf: *const u8, count: usize) {
 /// Set data, bss, and got page to RW
 /// really this only protects `size_of::<usize>()` but it'll flip the entire page
 /// including `rip_end()`, so don't call that again
-pub unsafe fn rw_page(ptr: *const usize) {
+pub unsafe fn rw_page(ptr: *mut c_void) {
     let offset = data_offset();
-    let ptr = unsafe { ptr.add(offset / size_of::<usize>()) };
+    let ptr = unsafe { ptr.byte_add(offset) };
     let _ = syscall!(Sysno::mprotect, ptr, size_of::<usize>(), 0x1 | 0x2);
 }
 
 /// Patch hardcoded memory addresses in the GLOBAL_OFFSET_TABLE
 /// this has the side effect of changing the values of *_offset() to their actual addresses
 /// but we can't call `rip_end()` after `mprotect` call anyway
-pub unsafe fn patch_got_offsets(ptr: *const usize) {
+pub unsafe fn patch_got_offsets(ptr: *mut c_void) {
     let offset = got_offset() - 1; // I don't know why this off-by-one error exists, but it does.
     let len = epilogue_offset() - offset;
-    let got_addr = ptr.add(offset / size_of::<usize>());
+    let got_addr = ptr.byte_add(offset) as *mut usize; // this cast is important, for the call to the usize `add()` later
 
     let count = len / core::mem::size_of::<usize>();
 
     for i in 0..count {
-        let value = got_addr.add(i) as *mut usize;
+        let value = got_addr.add(i);
         *value += ptr as usize;
     }
 }

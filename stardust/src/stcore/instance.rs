@@ -1,4 +1,5 @@
 use alloc::boxed::Box;
+use core::ffi::c_void;
 use core::ptr;
 use core::sync::atomic::{AtomicPtr, Ordering};
 
@@ -15,11 +16,11 @@ pub struct Instance {
     #[cfg(target_os = "windows")]
     pub kernel32: super::os::windows::kernel32::Kernel32,
     #[cfg(target_os = "windows")]
-    pub heap_handle: *const usize,
+    pub heap_handle: *mut c_void,
 }
 
 pub struct Base {
-    pub ptr: *const usize,
+    pub ptr: *mut c_void,
     pub len: usize,
 }
 
@@ -28,7 +29,7 @@ impl Instance {
         Instance {
             magic: INSTANCE_MAGIC,
             base: Base {
-                ptr: 0x0 as *const usize,
+                ptr: 0x0 as *mut c_void,
                 len: 0x0,
             },
             #[cfg(target_os = "linux")]
@@ -38,7 +39,7 @@ impl Instance {
             #[cfg(target_os = "windows")]
             kernel32: super::os::windows::kernel32::Kernel32::new(),
             #[cfg(target_os = "windows")]
-            heap_handle: ptr::null(),
+            heap_handle: ptr::null_mut(),
         }
     }
 

@@ -1,10 +1,13 @@
-use core::arch::{asm, global_asm};
+use core::{
+    arch::{asm, global_asm},
+    ffi::c_void,
+};
 
 global_asm!(include_str!("i686.asm"));
 
 #[inline(never)]
-pub fn rip_start() -> *mut usize {
-    let addr: *mut usize;
+pub fn rip_start() -> *mut c_void {
+    let addr: *mut c_void;
 
     unsafe {
         asm!(
@@ -18,8 +21,8 @@ pub fn rip_start() -> *mut usize {
 }
 
 #[inline(never)]
-pub fn rip_end() -> *mut usize {
-    let addr: *mut usize;
+pub fn rip_end() -> *mut c_void {
+    let addr: *mut c_void;
 
     unsafe {
         asm!(

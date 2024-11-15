@@ -37,7 +37,7 @@ impl StWindowsAllocator {
                 core::ptr::null_mut(),
             )
         };
-        instance.heap_handle = raw_heap_handle as *const usize;
+        instance.heap_handle = raw_heap_handle;
     }
 }
 
