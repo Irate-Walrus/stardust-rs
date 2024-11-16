@@ -66,7 +66,7 @@ This results in the `if !piece.is_empty()` check failing within the following co
 /* 1190 */     }
 ```
 
-This leads to a call being made to `_gcc_except_table` which has been removed by [linker.ld](./stardust/linker.ld) resulting in a segmentation fault.
+This leads to a call being made to `_gcc_except_table` which has been removed by [linux.ld](./stardust/scripts/linux.ld) resulting in a segmentation fault.
 
 > [!note]
 > Patching the GOT appeared to get us a little further along before it crashes. YAY!🥳
