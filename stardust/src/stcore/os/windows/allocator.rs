@@ -46,22 +46,22 @@ impl StWindowsAllocator {
 unsafe impl GlobalAlloc for StWindowsAllocator {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         let instance = Instance::get().unwrap();
-        (instance.ntdll.rtl_allocate_heap)(self.handle(), 0, layout.size())
+        (instance.ntdll.rtl_allocate_heap)(self.handle(), 0, layout.size() as _) as _
     }
 
     unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
         let instance = Instance::get().unwrap();
-        (instance.ntdll.rtl_allocate_heap)(self.handle(), HEAP_ZERO_MEMORY, layout.size())
+        (instance.ntdll.rtl_allocate_heap)(self.handle(), HEAP_ZERO_MEMORY, layout.size() as _) as _
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
         let instance = Instance::get().unwrap();
-        (instance.ntdll.rtl_free_heap)(self.handle(), 0, ptr);
+        (instance.ntdll.rtl_free_heap)(self.handle(), 0, ptr as _);
     }
 
     unsafe fn realloc(&self, ptr: *mut u8, _layout: Layout, new_size: usize) -> *mut u8 {
         let instance = Instance::get().unwrap();
-        (instance.ntdll.rtl_re_allocate_heap)(self.handle(), 0, ptr, new_size)
+        (instance.ntdll.rtl_re_allocate_heap)(self.handle(), 0, ptr as _, new_size as _) as _
     }
 }
 

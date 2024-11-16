@@ -99,7 +99,7 @@ pub unsafe fn initialize() {
 
     let mut ptr = local_inst.base.ptr.byte_add(data_offset()) as *mut c_void;
 
-    let mut size: usize = size_of::<usize>();
+    let mut size = size_of::<usize>() as _;
     let mut protect = 0x0;
     (local_inst.ntdll.nt_protect_virtual_memory)(
         usize::MAX as *mut c_void, // HANDLE-1 OR NtCurrentProcess()
