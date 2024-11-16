@@ -28,7 +28,9 @@ script = '''
 #!/usr/bin/env bash
 
 if [[ "$TARGET" == *windows* ]]; then
-    export RUSTFLAGS="-C codegen-units=1
+    export RUSTFLAGS="
+                      -C link-arg=-Wl,--verbose
+                      -C codegen-units=1
                       -C link-arg=-fpack-struct=8
                       -C link-arg=-falign-jumps=1
                       -C link-arg=-w
@@ -45,7 +47,7 @@ else
 	echo "Target $TARGET unsupported this will break..."
 fi
 
-cargo build --package=stardust --release --target ${TARGET}
+cargo build --package=stardust -vv --release --target ${TARGET}
 '''
 
 [tasks.build-runner]

@@ -1,9 +1,10 @@
 use core::arch::asm;
 use core::{ffi::c_void, ptr};
-use phnt::ffi::{
-    IMAGE_DOS_HEADER, PIMAGE_EXPORT_DIRECTORY, PIMAGE_NT_HEADERS64, PLDR_DATA_TABLE_ENTRY, PPEB,
-    PPEB_LDR_DATA,
-};
+use phnt::ffi::{IMAGE_DOS_HEADER, PIMAGE_EXPORT_DIRECTORY, PLDR_DATA_TABLE_ENTRY, PPEB_LDR_DATA};
+#[cfg(target_arch = "x86")]
+use phnt::ffi::{PIMAGE_NT_HEADERS32 as PIMAGE_NT_HEADERS, PPEB32 as PPEB};
+#[cfg(target_arch = "x86_64")]
+use phnt::ffi::{PIMAGE_NT_HEADERS64 as PIMAGE_NT_HEADERS, PPEB};
 
 define_djb2_hash_fn!(rt_djb2_hash);
 
@@ -20,8 +21,8 @@ pub fn find_peb() -> PPEB {
 }
 
 #[cfg(target_arch = "x86")]
-pub fn find_peb() -> PPEB32 {
-    let peb_ptr: PPEB32;
+pub fn find_peb() -> PPEB {
+    let peb_ptr: PPEB;
     unsafe {
         asm!(
         "mov {}, gs:[0x30]",
@@ -30,14 +31,14 @@ pub fn find_peb() -> PPEB32 {
     }
     peb_ptr
 }
+
 /// Retrieves the NT headers from the base address of a module.
 ///
 /// # Arguments
 /// * `base_addr` - The base address of the module.
 ///
 /// Returns a pointer to `ImageNtHeaders` or null if the headers are invalid.
-#[cfg(target_arch = "x86_64")]
-pub unsafe fn get_nt_headers(base_addr: *mut c_void) -> PIMAGE_NT_HEADERS64 {
+pub unsafe fn get_nt_headers(base_addr: *mut c_void) -> PIMAGE_NT_HEADERS {
     let dos_header = base_addr as *const IMAGE_DOS_HEADER;
 
     // Check if the DOS signature is valid (MZ)
@@ -46,7 +47,7 @@ pub unsafe fn get_nt_headers(base_addr: *mut c_void) -> PIMAGE_NT_HEADERS64 {
     }
 
     // Calculate the address of NT headers
-    let nt_headers = base_addr.byte_add((*dos_header).e_lfanew as usize) as PIMAGE_NT_HEADERS64;
+    let nt_headers = base_addr.byte_add((*dos_header).e_lfanew as usize) as PIMAGE_NT_HEADERS;
 
     // Check if the NT signature is valid (PE\0\0)
     if (*nt_headers).Signature != 0x4550 {
