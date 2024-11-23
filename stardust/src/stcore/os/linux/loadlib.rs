@@ -112,7 +112,6 @@ pub unsafe fn find_fn_in_lib(lib_base: *const usize, sym_hash: u32) -> Option<*c
         let name_ptr = (dynstr_addr + (*sym).st_name as usize) as *const u8;
         //info_addr!("name_ptr", name_ptr);
         let cstr = CStr::from_ptr(name_ptr as *const i8);
-        runtime_djb2_hash(cstr.to_bytes());
 
         if runtime_djb2_hash(cstr.to_bytes()) == sym_hash {
             return Some(core::mem::transmute(
