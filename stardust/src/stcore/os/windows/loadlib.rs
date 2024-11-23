@@ -25,7 +25,7 @@ pub fn find_peb() -> PPEB {
     let peb_ptr: PPEB;
     unsafe {
         asm!(
-        "mov {}, gs:[0x30]",
+        "mov {}, fs:[0x30]",
         out(reg) peb_ptr
         );
     }
