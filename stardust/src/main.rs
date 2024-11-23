@@ -49,9 +49,17 @@ fn panic(_: &core::panic::PanicInfo) -> ! {
 #[global_allocator]
 pub static ALLOCATOR: StardustAllocator = StardustAllocator;
 
+#[cfg(target_arch = "x86")]
+#[cfg(target_os = "windows")]
 #[link_section = ".text.implant"]
 #[no_mangle]
 pub extern "C" fn stmain() {
+    _stmain();
+}
+
+#[link_section = ".text.implant"]
+#[no_mangle]
+pub extern "C" fn _stmain() {
     unsafe { stcore::initialize() };
     info!("Hello Stardust!");
 
