@@ -15,6 +15,7 @@ SECTIONS
         *(.text.memcmp)
         *(.text.bcmp)
         *(.text.strlen)
+        *(.text)
 
         *(.text._*)             /* rust auto-generated helpers/junk */
         *(.text..Lanon*)        /* rust auto-generated helpers/junk */
