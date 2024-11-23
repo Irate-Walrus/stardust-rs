@@ -38,7 +38,8 @@ if [[ "$TARGET" == *windows* ]]; then
                       -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup
                       -C link-arg=-Wl,--subsystem,console
                       -C link-arg=-Wl,-T./stardust/scripts/windows.${TARGET%%-*}.ld
-                      -C opt-level=3";
+                      -Z fmt-debug=none";
+                      #-Z location-detail=none";
 elif [[ "$TARGET" == *linux* ]]; then
     export RUSTFLAGS="-C link-arg=-Wl,--verbose
        	              -C relocation-model=pic
