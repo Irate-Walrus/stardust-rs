@@ -1,4 +1,5 @@
 use core::ffi::CStr;
+use core::str;
 use syscalls::{syscall, Sysno};
 
 #[cfg(target_pointer_width = "64")]
@@ -24,7 +25,7 @@ pub unsafe fn close(fd: usize) -> usize {
     syscall!(Sysno::close, fd).unwrap()
 }
 
-pub unsafe fn find_lib(sym_hash: u32, sym_len: usize) -> Option<*const usize> {
+pub unsafe fn find_lib(sym_hash: u32) -> Option<*const usize> {
     let path = b"/proc/self/maps\0";
     let mut buffer = [0u8; 4096];
 
@@ -37,23 +38,28 @@ pub unsafe fn find_lib(sym_hash: u32, sym_len: usize) -> Option<*const usize> {
     // close proc/self/map
     unsafe { close(fd) };
 
-    find_lib_in_proc_map(&buffer[..count as usize], sym_hash, sym_len)
+    find_lib_in_proc_map(&buffer[..count as usize], sym_hash)
 }
 
-pub fn find_lib_in_proc_map(buffer: &[u8], sym_hash: u32, sym_len: usize) -> Option<*const usize> {
+pub fn find_lib_in_proc_map(buffer: &[u8], sym_hash: u32) -> Option<*const usize> {
     let mut lines = buffer.split(|&c| c == b'\n');
 
     while let Some(line) = lines.next() {
-        if line
-            .windows(sym_len) // size of b"libc", hardcoded for time being
-            .any(|w| runtime_djb2_hash(w) == sym_hash)
-        {
-            // Parse the starting address in hex
-            if let Some(pos) = line.iter().position(|&c| c == b'-') {
-                let addr_hex = &line[..pos];
-                let addr_str = core::str::from_utf8(addr_hex).ok()?;
-                return Some(usize::from_str_radix(addr_str, 16).unwrap() as *const usize);
-            }
+        let line_str = str::from_utf8(line).unwrap();
+        let mut rt_hash = 0x0;
+        if let (Some(dot), Some(slash)) = (line_str.rfind('.'), line_str.rfind('/')) {
+            let slice = &line_str[slash + 1..dot];
+            rt_hash = runtime_djb2_hash(slice.as_bytes());
+        }
+
+        if rt_hash != sym_hash {
+            continue;
+        }
+
+        if let Some(pos) = line.iter().position(|&c| c == b'-') {
+            let addr_hex = &line[..pos];
+            let addr_str = core::str::from_utf8(addr_hex).ok()?;
+            return Some(usize::from_str_radix(addr_str, 16).unwrap() as *const usize);
         }
     }
     None

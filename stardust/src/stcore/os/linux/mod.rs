@@ -68,7 +68,7 @@ pub unsafe fn initialize() {
     }
 
     // Find libc to demonstrate calling std library
-    local_inst.libc.base_addr = unsafe { find_lib(djb2_hash!(b"libc"), 4) };
+    local_inst.libc.base_addr = unsafe { find_lib(djb2_hash!(b"libc")) };
 
     if let Some(libc_base_addr) = local_inst.libc.base_addr {
         if let Some(write_fn_addr) = unsafe { find_fn_in_lib(libc_base_addr, djb2_hash!(b"write")) }
