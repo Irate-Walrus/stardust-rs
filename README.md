@@ -21,8 +21,8 @@ The following targets are supported.
 
 | Target | Payload Size |
 | --- | --- |
-| `i686-linux` | 16537B |
-| `x86_x64-linux` | 16679B |
+| `i686-linux` | 12397B |
+| `x86_64-linux` | 12487B |
 | `i686-windows` | 4141B |
 | `x86_64-windows` | 4120B |
 
@@ -38,14 +38,14 @@ Following is the current output of `cargo make -p x86_64-linux run`:
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
 [*] Allocation Start Address:   0x700000000000
-[*] Allocation End Address:     0x700000003107
-[*] Allocation Size:            12551B
+[*] Allocation End Address:     0x7000000030c7
+[*] Allocation Size:            12487B
 
 ***     [STARDUST x86_64]       ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
-[*] Stardust Length:            12551
-[*] Stardust Instance:          0x7f66cc115000
+[*] Stardust Length:            12487
+[*] Stardust Instance:          0x7f1cccd3b000
 [*] Hitting Breakpoint!
 ```
 
