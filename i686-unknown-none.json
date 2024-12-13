@@ -1,0 +1,33 @@
+{
+  "arch": "x86",
+  "cpu": "pentium4",
+  "crt-objects-fallback": "false",
+  "crt-static-respected": true,
+  "data-layout": "e-m:e-p:32:32-p270:32:32-p271:32:32-p272:64:64-i128:128-f64:32:64-f80:32-n8:16:32-S128",
+  "dynamic-linking": true,
+  "env": "gnu",
+  "has-rpath": true,
+  "has-thread-local": true,
+  "linker-flavor": "gnu-cc",
+  "llvm-target": "i686-unknown-none-elf",
+  "max-atomic-width": 64,
+  "metadata": {
+    "description": "Bare i686 ELF",
+    "host_tools": true,
+    "std": false,
+    "tier": 3
+  },
+  "panic-strategy": "abort",
+  "position-independent-executables": true,
+  "pre-link-args": {
+    "gnu-cc": ["-m32"],
+    "gnu-lld-cc": ["-m32"]
+  },
+  "relro-level": "full",
+  "stack-probes": {
+    "kind": "inline"
+  },
+  "supported-sanitizers": ["address"],
+  "supported-split-debuginfo": ["packed", "unpacked", "off"],
+  "target-pointer-width": "32"
+}

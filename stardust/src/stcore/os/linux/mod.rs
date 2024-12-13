@@ -1,6 +1,6 @@
 use alloc::boxed::Box;
-use core::ffi::c_void;
 use core::sync::atomic::Ordering;
+use core::{ffi::c_void, intrinsics};
 use syscalls::{syscall, Sysno};
 
 mod allocator;
@@ -35,7 +35,7 @@ pub unsafe fn write(fd: usize, buf: *const u8, count: usize) {
 /// including `rip_end()`, so don't call that again
 pub unsafe fn rw_page(ptr: *mut c_void) {
     let offset = data_offset();
-    let ptr = unsafe { ptr.byte_add(offset) };
+    let ptr = ptr.byte_add(offset);
     let _ = syscall!(Sysno::mprotect, ptr, size_of::<usize>(), 0x1 | 0x2);
 }
 

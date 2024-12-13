@@ -19,9 +19,29 @@ impl Kernel32 {
     }
 }
 
-type OutputDebugStringA = unsafe extern "system" fn(lpOutputString: *const u8);
-type OutputDebugStringW = unsafe extern "system" fn(lpOutputString: *const u16);
-pub type WriteFile = unsafe extern "system" fn(
+#[cfg(target_arch = "x86")]
+type OutputDebugStringA = unsafe extern "stdcall" fn(lpOutputString: *const u8);
+
+#[cfg(target_arch = "x86")]
+type OutputDebugStringW = unsafe extern "stdcall" fn(lpOutputString: *const u16);
+
+#[cfg(target_arch = "x86")]
+pub type WriteFile = unsafe extern "stdcall" fn(
+    hFile: *mut c_void,
+    lpBuffer: *const c_void,
+    nNumberOfBytesToWrite: u32,
+    lpNumberOfBytesWritten: *mut u32,
+    lpOverlapped: *mut c_void,
+) -> i32;
+
+#[cfg(target_arch = "x86_64")]
+type OutputDebugStringA = unsafe extern "win64" fn(lpOutputString: *const u8);
+
+#[cfg(target_arch = "x86_64")]
+type OutputDebugStringW = unsafe extern "win64" fn(lpOutputString: *const u16);
+
+#[cfg(target_arch = "x86_64")]
+pub type WriteFile = unsafe extern "win64" fn(
     hFile: *mut c_void,
     lpBuffer: *const c_void,
     nNumberOfBytesToWrite: u32,

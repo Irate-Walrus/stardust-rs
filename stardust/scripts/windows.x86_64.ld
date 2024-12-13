@@ -4,23 +4,11 @@ SECTIONS
 {
     .text ALIGN(16):
     {
-		. = 0x0000;
+		. = 0x0;
 		*(.text.prologue)       /* aligns the stack by 16-bytes and executes implant entrypoint */
 		*(.text.implant)        /* implant */
 
-        /* Ensure memcpy, memmove, memset, memcmp, bcmp, strlen are placed in .text */
-        *(.text.memcpy)
-        *(.text.memmove)
-        *(.text.memset)
-        *(.text.memcmp)
-        *(.text.bcmp)
-        *(.text.strlen)
         *(.text)
-
-        *(.text._*)             /* rust auto-generated helpers/junk */
-        *(.text..Lanon*)        /* rust auto-generated helpers/junk */
-        *(.text.unlikely*)      /* unlikely executed functions, related to compiler optimization */
-        *(.text.rust_oom)       /* rust auto-generated alloc helper */
 
 		*(.rodata*)             /* read-only (const) data */
         *(.rdata*)

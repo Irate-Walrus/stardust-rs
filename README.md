@@ -1,7 +1,7 @@
-# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux & x86_64 Windows
+# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux & Windows
 
 > [!warning]
-> This is/was an experiment and I can personally garantee it is unsafe. I describe below some of the unobvious (to me) issues I ended up facing.
+> This is an experiment and I can personally guarantee it is unsafe. I describe below some of the unobvious (to me) issues I ended up facing.
 > I'm keen to hear of any possible workarounds for these issues, just open a PR.
 
 This code is based on the following previous work:
@@ -11,12 +11,26 @@ This code is based on the following previous work:
 - https://kerkour.com/rust-position-independent-shellcode
 - https://github.com/safedv/Rustic64
 
-The following targets are supported:
-- `i686-unknown-linux-gnu`
-- `x86_x64-unknown-linux-gnu`
-- `x86_64-pc-windows-gnu`
 
-Following is the current output of `cargo make --env TARGET="x86_64-unknown-linux-gnu run`:
+Some github and rust-lang issues from the journey, thank you friends!:
+- [Compiling `no_std` for `i686-pc-windows-gnu` ignores `panic=abort`](https://github.com/rust-lang/rust/issues/133826)
+- [Inclusion of `-lkernel32` and others when compiling `#![no_std]` for i686-pc-windows-gnu](https://users.rust-lang.org/t/inclusion-of-lkernel32-and-others-when-compiling-no-std-for-i686-pc-windows-gnu/121551)
+- [`i686-w64-mingw32-gcc` and relative data addressing (PIC)](https://users.rust-lang.org/t/i686-w64-mingw32-gcc-and-relative-data-addressing-pic/122399/9)
+
+The following targets are supported.
+
+| Target | Payload Size |
+| --- | --- |
+| `i686-linux` | 16537B |
+| `x86_x64-linux` | 16679B |
+| `i686-windows` | 4141B |
+| `x86_64-windows` | 4120B |
+
+> The size discrepancy is due to my lazy locating of `libc.so` in the linux version.
+
+To build one of these targets use `cargo make -p $target build`
+
+Following is the current output of `cargo make -p x86_64-linux run`:
 
 ```
 ***     [LOADER]        ***
@@ -102,3 +116,13 @@ Patching the hardcoded addresses with GDB results in a successful execution as s
 **Solution**:
 - Patch the GOT dynamically during runtime, this appears to allow the use of `compiler_builtins`!
 - Don't directly call `extern` functions before patching, call them within `asm!` macro
+
+## (Solved) Problem #3 - i686 Windows and `-fPIC`
+
+You're best off reading this (or maybe you're not, won't get that time back) [`i686-w64-mingw32-gcc` and relative data addressing (PIC)](https://users.rust-lang.org/t/i686-w64-mingw32-gcc-and-relative-data-addressing-pic/122399/9).
+
+**Solution**:
+- Compile an i686 elf
+- Patch the GOT dynamically during runtime
+- Specify `stdcall` where required.
+- _"It's all just machine code in the end"_ - Me while justifying this mess

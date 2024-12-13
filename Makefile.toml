@@ -3,11 +3,54 @@ skip_core_tasks = true
 default_to_workspace = false
 
 [env]
-DEFAULT_TARGET = "x86_64-unknown-linux-gnu"
-"TARGET" = { value = "${DEFAULT_TARGET}", condition = { env_not_set = [
-    "TARGET",
-] } }
-EXECUTABLE_EXTENSION = { source = "${TARGET}", default_value = "", mapping = { "x86_64-unknown-linux-gnu" = "", "i686-unknown-linux-gnu" = "", "x86_64-pc-windows-gnu" = ".exe", "i686-pc-windows-gnu" = ".exe" } }
+CARGO_MAKE_DEFAULT_PROFILE = "x86_64-linux"
+
+[env.x86_64-linux]
+IMPLANT_EXT = ""
+IMPLANT_TARGET = "x86_64-unknown-linux-gnu"
+IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
+FEATURES = "--features linux"
+RUNNER_TARGET = "${IMPLANT_TARGET}"
+RUNNER_EXT = ""
+
+[env.i686-linux]
+IMPLANT_TARGET = "i686-unknown-linux-gnu"
+IMPLANT_EXT = ""
+IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
+FEATURES = "--features linux"
+RUNNER_TARGET = "${IMPLANT_TARGET}"
+RUNNER_EXT = ""
+
+[env.x86_64-windows]
+IMPLANT_EXT = ".exe"
+IMPLANT_TARGET = "x86_64-pc-windows-gnu"
+IMPLANT_RUSTFLAGS = { script = ["""
+RUSTFLAGS="
+                  -C link-arg=-Wl,--verbose
+                  -C codegen-units=1
+                  -C link-arg=-fpack-struct=8
+                  -C link-arg=-falign-jumps=1
+                  -C link-arg=-w
+                  -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup
+                  -C link-arg=-Wl,--subsystem,console
+                  -C link-arg=-Wl,-T./stardust/scripts/windows.x86_64.ld
+                  -C relocation-model=pic
+                  -Z fmt-debug=none";
+                  #-Z location-detail=none";
+
+echo $RUSTFLAGS
+"""] }
+FEATURES = "--features windows"
+RUNNER_TARGET = "${IMPLANT_TARGET}"
+RUNNER_EXT = ".exe"
+
+[env.i686-windows]
+EXT = ""
+IMPLANT_TARGET = "i686-unknown-none.json"
+IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
+FEATURES = "--features windows"
+RUNNER_TARGET = "i686-pc-windows-gnu"
+RUNNER_EXT = ".exe"
 
 [tasks.default]
 description = "Default task that builds the project."
@@ -20,41 +63,21 @@ dependencies = ["clean", "build-stardust", "objcopy", "build-runner"]
 [tasks.run]
 description = "Run startdust as PIC"
 dependencies = ["build"]
-command = "./target/${TARGET}/debug/runner${EXECUTABLE_EXTENSION}"
+command = "./target/${RUNNER_TARGET}/debug/runner${RUNNER_EXT}"
 
 [tasks.build-stardust]
 description = "Build stardust."
 script = '''
 #!/usr/bin/env bash
 
-if [[ "$TARGET" == *windows* ]]; then
-    export RUSTFLAGS="
-                      -C link-arg=-Wl,--verbose
-                      -C codegen-units=1
-                      -C link-arg=-fpack-struct=8
-                      -C link-arg=-falign-jumps=1
-                      -C link-arg=-w
-                      -C relocation-model=pic
-                      -C link-arg=-Wl,-s,--no-seh,--enable-stdcall-fixup
-                      -C link-arg=-Wl,--subsystem,console
-                      -C link-arg=-Wl,-T./stardust/scripts/windows.${TARGET%%-*}.ld
-                      -Z fmt-debug=none";
-                      #-Z location-detail=none";
-elif [[ "$TARGET" == *linux* ]]; then
-    export RUSTFLAGS="-C link-arg=-Wl,--verbose
-       	              -C relocation-model=pic
-                      -C link-arg=-T./stardust/scripts/linux.ld";
-else
-	echo "Target $TARGET unsupported this will break..."
-fi
-
-cargo build --package=stardust -vv --release --target ${TARGET}
+export RUSTFLAGS=$IMPLANT_RUSTFLAGS
+cargo build ${FEATURES} -Zbuild-std=core,alloc -Zbuild-std-features=compiler-builtins-mem --package=stardust --release --target ${IMPLANT_TARGET}
 '''
 
 [tasks.build-runner]
 description = "Build runner."
 command = "cargo"
-args = ["build", "--package=runner", "--target", "${TARGET}"]
+args = ["build", "--package=runner", "--target", "${RUNNER_TARGET}"]
 
 [tasks.clean]
 description = "Cleans the project."
@@ -65,7 +88,7 @@ description = "Copy .text section of the binary to stardust.bin."
 script = '''
 #!/usr/bin/env bash
 
-objcopy -O binary -j .text target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION} target/stardust.bin
+objcopy -O binary -j .text target/${IMPLANT_TARGET%.json}/release/stardust${IMPLANT_EXT} target/stardust.bin
 
 echo "Stardust Size: $(stat --format="%s" target/stardust.bin | numfmt --from=auto --to=iec-i --suffix=B)"
 '''
@@ -81,13 +104,13 @@ args = [
     "-j",
     ".text",
     "-z",
-    "target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION}",
+    "target/${IMPLANT_TARGET%.json}/release/stardust${IMPLANT_EXT}",
 ]
 
 [tasks.debug]
 description = "Debug stardust pic."
 command = "rust-gdb"
-args = ["target/${TARGET}/debug/runner${EXECUTABLE_EXTENSION}"]
+args = ["target/${RUNNER_TARGET}/debug/runner${RUNNER_EXT}"]
 
 [tasks.r2-bin]
 description = "Analyze stardust bin w/ r2."
@@ -100,5 +123,5 @@ command = "r2"
 args = [
     "-e bin.relocs.apply=true",
     "-AA",
-    "target/${TARGET}/release/stardust${EXECUTABLE_EXTENSION}",
+    "target/${IMPLANT_TARGET%.json}/release/stardust${IMPLANT_EXT}",
 ]

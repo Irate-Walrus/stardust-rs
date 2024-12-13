@@ -9,13 +9,13 @@ pub const INSTANCE_MAGIC: u32 = 0xDEADBEEF;
 pub struct Instance {
     pub magic: u32,
     pub base: Base,
-    #[cfg(target_os = "linux")]
+    #[cfg(feature = "linux")]
     pub libc: super::os::linux::libc::Libc,
-    #[cfg(target_os = "windows")]
+    #[cfg(feature = "windows")]
     pub ntdll: super::os::windows::ntdll::Ntdll,
-    #[cfg(target_os = "windows")]
+    #[cfg(feature = "windows")]
     pub kernel32: super::os::windows::kernel32::Kernel32,
-    #[cfg(target_os = "windows")]
+    #[cfg(feature = "windows")]
     pub heap_handle: *mut c_void,
 }
 
@@ -32,13 +32,13 @@ impl Instance {
                 ptr: 0x0 as *mut c_void,
                 len: 0x0,
             },
-            #[cfg(target_os = "linux")]
+            #[cfg(feature = "linux")]
             libc: super::os::linux::libc::Libc::new(),
-            #[cfg(target_os = "windows")]
+            #[cfg(feature = "windows")]
             ntdll: super::os::windows::ntdll::Ntdll::new(),
-            #[cfg(target_os = "windows")]
+            #[cfg(feature = "windows")]
             kernel32: super::os::windows::kernel32::Kernel32::new(),
-            #[cfg(target_os = "windows")]
+            #[cfg(feature = "windows")]
             heap_handle: ptr::null_mut(),
         }
     }

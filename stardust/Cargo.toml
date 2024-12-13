@@ -5,17 +5,16 @@ edition = "2021"
 authors = ["Irate-Walrus"]
 
 [dependencies]
-compiler_builtins = { version = "0.1.135", features = ["mem"] }
 djb2_macro = { path = "../djb2_macro" }
-
-[target.'cfg(target_os = "linux")'.dependencies]
+phnt = { git = "https://github.com/Irate-Walrus/phnt-rs.git", optional = true }
 syscalls = { version = "0.6.18", default-features = false, features = [
     "x86_64",
-] }
+], optional = true }
 goblin = { version = "0.9.2", default-features = false, features = [
     "elf32",
     "elf64",
-] }
+], optional = true }
 
-[target.'cfg(target_os = "windows")'.dependencies]
-phnt = { git = "https://github.com/Irate-Walrus/phnt-rs.git" }
+[features]
+windows = ["phnt"]
+linux = ["syscalls", "goblin"]
