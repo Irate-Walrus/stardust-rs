@@ -1,19 +1,19 @@
 use core::ffi::c_void;
 use core::ptr::null_mut;
 use phnt::ffi::{
-    NtProtectVirtualMemoryType, NtTerminateProcessType, RtlAllocateHeapType, RtlCreateHeapType,
-    RtlDestroyHeapType, RtlFreeHeapType, RtlReAllocateHeapType,
+    NtProtectVirtualMemoryFn, NtTerminateProcessFn, RtlAllocateHeapFn, RtlCreateHeapFn,
+    RtlDestroyHeapFn, RtlFreeHeapFn, RtlReAllocateHeapFn,
 };
 
 pub struct Ntdll {
     pub base_addr: *mut c_void,
-    pub rtl_create_heap: RtlCreateHeapType,
-    pub rtl_allocate_heap: RtlAllocateHeapType,
-    pub rtl_free_heap: RtlFreeHeapType,
-    pub rtl_re_allocate_heap: RtlReAllocateHeapType,
-    pub rtl_destroy_heap: RtlDestroyHeapType,
-    pub nt_terminate_process: NtTerminateProcessType,
-    pub nt_protect_virtual_memory: NtProtectVirtualMemoryType,
+    pub rtl_create_heap: RtlCreateHeapFn,
+    pub rtl_allocate_heap: RtlAllocateHeapFn,
+    pub rtl_free_heap: RtlFreeHeapFn,
+    pub rtl_re_allocate_heap: RtlReAllocateHeapFn,
+    pub rtl_destroy_heap: RtlDestroyHeapFn,
+    pub nt_terminate_process: NtTerminateProcessFn,
+    pub nt_protect_virtual_memory: NtProtectVirtualMemoryFn,
 }
 
 impl Ntdll {

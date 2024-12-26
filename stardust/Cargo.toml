@@ -6,7 +6,9 @@ authors = ["Irate-Walrus"]
 
 [dependencies]
 djb2_macro = { path = "../djb2_macro" }
-phnt = { git = "https://github.com/Irate-Walrus/phnt-rs.git", rev = "3104809a7225e3727c6a91b0fb1bb1819dfe141b", optional = true }
+phnt = { git = "https://github.com/Irate-Walrus/phnt-rs.git", rev = "d9889ae6afe5b56763f73a7ff492d0e4ae2f1050", optional = true, features = [
+    "fn_types",
+] }
 syscalls = { version = "0.6.18", default-features = false, features = [
     "x86_64",
 ], optional = true }
