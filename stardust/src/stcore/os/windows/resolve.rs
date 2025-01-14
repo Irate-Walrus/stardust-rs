@@ -63,7 +63,7 @@ pub unsafe fn get_nt_headers(base_addr: *mut c_void) -> PIMAGE_NT_HEADERS {
 /// * `module_hash` - The hash of the module name to locate.
 ///
 /// Returns the base address of the module or null if not found.
-pub unsafe fn ldr_module(module_hash: u32) -> *mut c_void {
+pub unsafe fn resolve_module(module_hash: u32) -> *mut c_void {
     let peb = find_peb(); // Retrieve the PEB (Process Environment Block)
 
     if peb.is_null() {
@@ -105,7 +105,7 @@ pub unsafe fn ldr_module(module_hash: u32) -> *mut c_void {
 /// * `function_hash` - The hash of the function name to locate.
 ///
 /// Returns the function's address or null if not found.
-pub unsafe fn ldr_function(module_base: *mut c_void, function_hash: u32) -> *mut c_void {
+pub unsafe fn resolve_function(module_base: *mut c_void, function_hash: u32) -> *mut c_void {
     let p_img_nt_headers = get_nt_headers(module_base); // Retrieve NT headers for the module
 
     if p_img_nt_headers.is_null() {

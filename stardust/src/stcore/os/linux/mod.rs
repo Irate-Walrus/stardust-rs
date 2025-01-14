@@ -5,10 +5,10 @@ use syscalls::{syscall, Sysno};
 
 mod allocator;
 pub mod libc;
-mod loadlib;
+mod resolve;
 
 pub use allocator::StLinuxAllocator;
-pub use loadlib::{find_fn_in_lib, find_lib};
+pub use resolve::{resolve_function, resolve_module};
 
 use crate::stcore::*;
 
@@ -68,10 +68,11 @@ pub unsafe fn initialize() {
     }
 
     // Find libc to demonstrate calling std library
-    local_inst.libc.base_addr = unsafe { find_lib(djb2_hash!(b"libc")) };
+    local_inst.libc.base_addr = unsafe { resolve_module(djb2_hash!(b"libc")) };
 
     if let Some(libc_base_addr) = local_inst.libc.base_addr {
-        if let Some(write_fn_addr) = unsafe { find_fn_in_lib(libc_base_addr, djb2_hash!(b"write")) }
+        if let Some(write_fn_addr) =
+            unsafe { resolve_function(libc_base_addr, djb2_hash!(b"write")) }
         {
             local_inst.libc.write = Some(unsafe { core::mem::transmute(write_fn_addr) });
         }

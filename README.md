@@ -21,12 +21,10 @@ The following targets are supported.
 
 | Target | Payload Size |
 | --- | --- |
-| `i686-linux` | 12397B |
-| `x86_64-linux` | 12487B |
+| `i686-linux` | 4141B |
+| `x86_64-linux` | 4167B |
 | `i686-windows` | 4141B |
 | `x86_64-windows` | 4120B |
-
-> The size discrepancy is due to my lazy locating of `libc.so` in the linux version.
 
 To build one of these targets use `cargo make -p $target build`
 
@@ -38,14 +36,14 @@ Following is the current output of `cargo make -p x86_64-linux run`:
 [*] Copy Shellcode Into RW Memory
 [*] Set Memory RX
 [*] Allocation Start Address:   0x700000000000
-[*] Allocation End Address:     0x7000000030c7
-[*] Allocation Size:            12487B
+[*] Allocation End Address:     0x700000001047
+[*] Allocation Size:            4167B
 
 ***     [STARDUST x86_64]       ***
 [*] Hello Stardust!
 [*] Stardust Start Address:     0x700000000000
-[*] Stardust Length:            12487
-[*] Stardust Instance:          0x7f1cccd3b000
+[*] Stardust Length:            4167
+[*] Stardust Instance:          0x7f785645f000
 [*] Hitting Breakpoint!
 ```
 

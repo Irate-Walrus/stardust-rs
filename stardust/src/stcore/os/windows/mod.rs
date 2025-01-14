@@ -4,7 +4,7 @@ mod loadlib;
 pub mod ntdll;
 
 pub use allocator::StWindowsAllocator;
-pub use loadlib::{ldr_function, ldr_module};
+pub use resolve::{resolve_function, resolve_module};
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
@@ -53,59 +53,60 @@ pub unsafe fn initialize() {
     local_inst.base.len = stardust_len;
 
     // Load the base address of kernel32.dll.
-    local_inst.kernel32.base_addr = ldr_module(djb2_hash!(b"KERNEL32.DLL"));
+    local_inst.kernel32.base_addr = resolve_module(djb2_hash!(b"KERNEL32.DLL"));
 
-    let output_debug_string_a_addr = ldr_function(
+    let output_debug_string_a_addr = resolve_function(
         local_inst.kernel32.base_addr,
         djb2_hash!(b"OutputDebugStringA"),
     );
     local_inst.kernel32.output_debug_string_a = core::mem::transmute(output_debug_string_a_addr);
 
-    let output_debug_string_w_addr = ldr_function(
+    let output_debug_string_w_addr = resolve_function(
         local_inst.kernel32.base_addr,
         djb2_hash!(b"OutputDebugStringW"),
     );
     local_inst.kernel32.output_debug_string_w = core::mem::transmute(output_debug_string_w_addr);
 
-    let write_file_addr = ldr_function(local_inst.kernel32.base_addr, djb2_hash!(b"WriteFile"));
+    let write_file_addr = resolve_function(local_inst.kernel32.base_addr, djb2_hash!(b"WriteFile"));
     local_inst.kernel32.write_file = core::mem::transmute(write_file_addr);
 
     // Load the base address of ntdll.dll.
-    local_inst.ntdll.base_addr = ldr_module(djb2_hash!(b"ntdll.dll"));
+    local_inst.ntdll.base_addr = resolve_module(djb2_hash!(b"ntdll.dll"));
 
     // Resolve RtlCreateHeap
     let rtl_create_heap_addr =
-        ldr_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlCreateHeap"));
+        resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlCreateHeap"));
     local_inst.ntdll.rtl_create_heap = core::mem::transmute(rtl_create_heap_addr);
 
     // Resolve RtlAllocateHeap
     let rtl_allocate_heap_addr =
-        ldr_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlAllocateHeap"));
+        resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlAllocateHeap"));
     local_inst.ntdll.rtl_allocate_heap = core::mem::transmute(rtl_allocate_heap_addr);
 
     // Resolve RtlFreeHeap
-    let rtl_free_heap_addr = ldr_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlFreeHeap"));
+    let rtl_free_heap_addr =
+        resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlFreeHeap"));
     local_inst.ntdll.rtl_free_heap = core::mem::transmute(rtl_free_heap_addr);
 
     // Resolve RtlReAllocateHeap
     let rtl_reallocate_heap_addr =
-        ldr_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlReAllocateHeap"));
+        resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlReAllocateHeap"));
     local_inst.ntdll.rtl_re_allocate_heap = core::mem::transmute(rtl_reallocate_heap_addr);
 
     // Resolve RtlDestroyHeap
     let rtl_destroy_heap_addr =
-        ldr_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlDestroyHeap"));
+        resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlDestroyHeap"));
     local_inst.ntdll.rtl_destroy_heap = core::mem::transmute(rtl_destroy_heap_addr);
 
     // Resolve NtTerminateProcess
-    let nt_terminate_process_addr = ldr_function(
+    let nt_terminate_process_addr = resolve_function(
         local_inst.ntdll.base_addr,
         djb2_hash!(b"NtTerminateProcess"),
     );
     local_inst.ntdll.nt_terminate_process = core::mem::transmute(nt_terminate_process_addr);
 
     // Resolve NtProtectVirtualMemory
-    let nt_terminate_process_addr = ldr_function(
+    let nt_terminate_process_addr = resolve_function(
         local_inst.ntdll.base_addr,
         djb2_hash!(b"NtProtectVirtualMemory"),
     );

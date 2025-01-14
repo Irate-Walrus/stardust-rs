@@ -1,5 +1,7 @@
+use core::ffi::c_void;
+
 pub struct Libc {
-    pub base_addr: Option<*const usize>,
+    pub base_addr: Option<*const c_void>,
     pub write: Option<unsafe extern "C" fn(isize, *const u8, usize) -> isize>,
 }
 
