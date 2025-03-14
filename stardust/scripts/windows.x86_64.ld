@@ -32,7 +32,6 @@ SECTIONS
         . = ALIGN(0x1000);
 
         _data_offset = .;
-        *(.global*)
         *(.data*)
         *(.bss*)
 		_epilogue_offset = .;
