@@ -1,7 +1,7 @@
 mod allocator;
 pub mod kernel32;
-mod loadlib;
 pub mod ntdll;
+mod resolve;
 
 pub use allocator::StWindowsAllocator;
 pub use resolve::{resolve_function, resolve_module};
