@@ -43,7 +43,7 @@ pub unsafe fn rw_page(ptr: *mut c_void) {
 /// this has the side effect of changing the values of *_offset() to their actual addresses
 /// but we can't call `rip_end()` after `mprotect` call anyway
 pub unsafe fn patch_got_offsets(ptr: *mut c_void) {
-    let offset = got_offset() - 1; // I don't know why this off-by-one error exists, but it does.
+    let offset = got_offset();
     let len = epilogue_offset() - offset;
     let got_addr = ptr.byte_add(offset) as *mut usize; // this cast is important, for the call to the usize `add()` later
 
