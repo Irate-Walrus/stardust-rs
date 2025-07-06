@@ -1,9 +1,6 @@
 # Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux & Windows
 
 > [!warning]
-> As of `rustc 1.90.0-nightly (71e4c005c 2025-07-01)` the linux implementation has now broken due to a bad `call qword ptr [rip + 0x14c9]` to `strlen` within `CStr::from_ptr`.
-> I assume this was previously inlined but is no longer.
->
 > This is an experiment and I can personally guarantee it is unsafe. I describe below some of the unobvious (to me) issues I ended up facing.
 > I'm keen to hear of any possible workarounds for these issues, just open a PR.
 

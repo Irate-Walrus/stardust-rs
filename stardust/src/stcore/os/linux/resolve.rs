@@ -98,31 +98,22 @@ pub unsafe fn resolve_module(sym_hash: u32) -> Option<*const c_void> {
                         info_addr!(" .next", (*current).next);
                         info_addr!(" .prev", (*current).prev);
                         */
-                        let name_ptr = (*current).name as *const i8;
+                        let name_ptr = (*current).name as *const u8;
 
                         if !name_ptr.is_null() {
-                            let name_cstr = CStr::from_ptr(name_ptr);
-
-                            let name_str = match name_cstr.to_str() {
-                                Ok(s) => s,
-                                Err(_) => continue,
-                            };
-
-                            log_str(name_str);
-                            log_str("\n");
-                            let mut rt_hash = 0;
-                            if let (Some(slash), Some(dot)) =
-                                (name_str.rfind('/'), name_str.rfind('.'))
-                            {
-                                let slice = &name_str[slash + 1..dot];
-                                log_str(slice);
-                                log_str("\n");
-                                rt_hash = rt_djb2_hash(slice.as_bytes());
+                            let mut start = 0; // last '/' + 1 or 0
+                            let mut i = 0; // first '.' or first '\0'
+                            while *name_ptr.add(i) != 0 && i < 255 {
+                                let ch = *name_ptr.add(i);
+                                if ch == b'/' {
+                                    start = i + 1;
+                                } else if ch == b'.' {
+                                    break;
+                                }
+                                i += 1;
                             }
-
-                            info_addr!("rt_hash", rt_hash);
-                            info_addr!("sym_hash", sym_hash);
-
+                            let slice = slice::from_raw_parts(name_ptr.add(start), i - start);
+                            let rt_hash = rt_djb2_hash(slice);
                             if rt_hash == sym_hash {
                                 return Some((*current).addr as *const c_void);
                             }
@@ -217,20 +208,21 @@ pub unsafe fn resolve_function(module_base: *const c_void, sym_hash: u32) -> Opt
     while (*sym).st_name != 0 {
         let name_ptr = (dynstr_addr + (*sym).st_name as usize) as *const u8;
         //info_addr!("name_ptr", name_ptr);
-        let name_cstr = CStr::from_ptr(name_ptr as *const i8);
 
-        //println!(
-        //    "{:?}@{:#x}",
-        //    name_cstr,
-        //    module_base as usize + (*sym).st_value as usize
-        //);
-
-        if rt_djb2_hash(name_cstr.to_bytes()) == sym_hash {
-            let addr = module_base as usize + (*sym).st_value as usize;
-            return Some(addr as *const usize);
+        if !name_ptr.is_null() {
+            let mut i = 0;
+            while *name_ptr.add(i) != 0 && i < 255 {
+                i += 1;
+            }
+            let slice = slice::from_raw_parts(name_ptr, i);
+            if rt_djb2_hash(slice) == sym_hash {
+                let addr = module_base as usize + (*sym).st_value as usize;
+                return Some(addr as *const usize);
+            }
         }
         sym = sym.add(1);
     }
 
+    log_str("[-] resolve_function failure\n");
     None
 }
