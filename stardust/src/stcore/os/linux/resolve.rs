@@ -14,6 +14,7 @@ use elf::dynamic::DT_DEBUG;
 use elf::program_header::PT_DYNAMIC;
 
 define_djb2_hash_fn!(rt_djb2_hash);
+use crate::{info_addr, info_int, log_str};
 
 // Opens a file using the `open` syscall
 pub unsafe fn open(path: *const u8, flags: usize) -> usize {
@@ -54,51 +55,79 @@ pub unsafe fn resolve_module(sym_hash: u32) -> Option<*const c_void> {
         Some(kv) => kv.value,
         None => return None,
     };
-    //println!("AT_PHDR@{:#x}", at_phdr);
+
+    let ehdr_ptr = (at_phdr as *const u8).offset(-(size_of::<elf::header::Header>() as isize));
+    //info_addr!("ehdr_ptr", ehdr_ptr);
 
     let phdr = at_phdr as *const elf::program_header::ProgramHeader;
+    /*
+    info_addr!("at_phdr", phdr);
+    info_int!("atphnum", at_phnum);
+    */
 
     for i in 0..at_phnum {
         let phdr_entry = phdr.add(i as usize);
-        //println!("PT_{}@{:#x}", (*phdr_entry).p_type, phdr_entry as usize);
+        //info_addr!("phdr_entry", phdr_entry);
 
         if (*phdr_entry).p_type == PT_DYNAMIC {
             // PT_DYNAMIC
-            let dynamic = (at_phdr + (*phdr_entry).p_vaddr as usize) as *const elf::dynamic::Dyn;
+            let dynamic =
+                (ehdr_ptr as usize + (*phdr_entry).p_vaddr as usize) as *const elf::dynamic::Dyn;
             let mut dyn_entry = dynamic;
 
+            //info_addr!("pt_dynamic", dyn_entry);
             while (*dyn_entry).d_tag != 0 {
-                //println!("DT_{}@{:#x}", (*dyn_entry).d_tag, dynamic as usize);
                 if (*dyn_entry).d_tag as u64 == DT_DEBUG {
                     // DT_DEBUG
                     let r_debug = (*dyn_entry).d_val as *const RDebug;
-                    //println!("RDBG@{:#x}", r_debug as usize);
-
-                    let mut current = (*r_debug).r_map;
+                    /*
+                    info_addr!("dt_debug", dyn_entry);
+                    info_int!(" .r_version", (*r_debug).r_version);
+                    info_addr!(" .r_map", (*r_debug).r_map);
+                    info_addr!(" .r_brk", (*r_debug).r_brk);
+                    info_int!(" .r_state", (*r_debug).r_state);
+                    info_addr!(" .r_ldbase", (*r_debug).r_ldbase);
+                    */
+                    let mut current = (*r_debug).r_map as *mut LinkMap;
                     while !current.is_null() {
-                        let name_ptr = (*current).name;
+                        /*
+                        info_addr!("r_map", current);
+                        info_addr!(" .addr", (*current).addr);
+                        info_addr!(" .name", (*current).name);
+                        info_addr!(" .ld", (*current).ld);
+                        info_addr!(" .next", (*current).next);
+                        info_addr!(" .prev", (*current).prev);
+                        */
+                        let name_ptr = (*current).name as *const i8;
+
                         if !name_ptr.is_null() {
-                            let name_cstr = CStr::from_ptr(name_ptr as *const i8);
+                            let name_cstr = CStr::from_ptr(name_ptr);
+
                             let name_str = match name_cstr.to_str() {
                                 Ok(s) => s,
                                 Err(_) => continue,
                             };
 
-                            //println!("{}@{:#x}", name_str, (*current).addr as usize);
-
+                            log_str(name_str);
+                            log_str("\n");
                             let mut rt_hash = 0;
-                            if let (Some(dot), Some(slash)) =
-                                (name_str.rfind('.'), name_str.rfind('/'))
+                            if let (Some(slash), Some(dot)) =
+                                (name_str.rfind('/'), name_str.rfind('.'))
                             {
                                 let slice = &name_str[slash + 1..dot];
+                                log_str(slice);
+                                log_str("\n");
                                 rt_hash = rt_djb2_hash(slice.as_bytes());
                             }
+
+                            info_addr!("rt_hash", rt_hash);
+                            info_addr!("sym_hash", sym_hash);
 
                             if rt_hash == sym_hash {
                                 return Some((*current).addr as *const c_void);
                             }
                         }
-                        current = (*current).next;
+                        current = (*current).next as *mut LinkMap;
                     }
                     break;
                 }
@@ -107,6 +136,7 @@ pub unsafe fn resolve_module(sym_hash: u32) -> Option<*const c_void> {
         }
     }
 
+    log_str("[-] resolve_module failed\n");
     None
 }
 
@@ -117,18 +147,19 @@ struct Auxv {
 }
 
 #[repr(C)]
+#[derive(Debug)]
 struct LinkMap {
     addr: usize,
-    name: *const u8,
+    name: usize, // *const u8
     ld: usize,
-    next: *mut LinkMap,
-    prev: *mut LinkMap,
+    next: usize, // *mut LinkMap
+    prev: usize, // *mut LinkMap
 }
 
 #[repr(C)]
 struct RDebug {
     r_version: i32,
-    r_map: *mut LinkMap,
+    r_map: usize, // *mut LinkMap
     r_brk: usize,
     r_state: i32,
     r_ldbase: usize,
