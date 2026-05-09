@@ -1,30 +1,55 @@
-# Rust Position Independent Shellcode (PIC) Template for i686 & x86\_64 Linux & Windows
+# Rust Position Independent Shellcode (PIC) Template for i686 & x86_64 Linux & Windows
 
 > [!warning]
 > This is an experiment and I can personally guarantee it is unsafe. I describe below some of the unobvious (to me) issues I ended up facing.
 > I'm keen to hear of any possible workarounds for these issues, just open a PR.
 
 This code is based on the following previous work:
+
 - https://bruteratel.com/research/feature-update/2021/01/30/OBJEXEC/
 - https://5pider.net/blog/2024/01/27/modern-shellcode-implant-design/
 - https://github.com/wumb0/rust_bof
 - https://kerkour.com/rust-position-independent-shellcode
 - https://github.com/safedv/Rustic64
 
-
 Some github and rust-lang issues from the journey, thank you friends!:
+
 - [Compiling `no_std` for `i686-pc-windows-gnu` ignores `panic=abort`](https://github.com/rust-lang/rust/issues/133826)
 - [Inclusion of `-lkernel32` and others when compiling `#![no_std]` for i686-pc-windows-gnu](https://users.rust-lang.org/t/inclusion-of-lkernel32-and-others-when-compiling-no-std-for-i686-pc-windows-gnu/121551)
 - [`i686-w64-mingw32-gcc` and relative data addressing (PIC)](https://users.rust-lang.org/t/i686-w64-mingw32-gcc-and-relative-data-addressing-pic/122399/9)
 
 The following targets are supported.
 
-| Target | Payload Size |
-| --- | --- |
-| `i686-linux` | 4141B |
-| `x86_64-linux` | 4167B |
-| `i686-windows` | 4141B |
-| `x86_64-windows` | 4120B |
+| Target           | Payload Size |
+| ---------------- | ------------ |
+| `i686-linux`     | 4141B        |
+| `x86_64-linux`   | 4167B        |
+| `i686-windows`   | 4141B        |
+| `x86_64-windows` | 4120B        |
+
+> [!NOTE]
+> Last tested with `rustc 1.97.0-nightly (20de910db 2026-05-02)` and `cargo 1.97.0-nightly (4f9b52075 2026-05-01)`
+
+
+The following dependencies must be installed:
+
+```sh
+cargo install --force cargo-make
+
+# Cross-compiler for windows
+sudo apt-get install mingw-w64
+
+# Cross-compiler for i686 linux
+sudo apt-get install gcc-multilib
+
+# Linux rustup targets
+rustup target add i686-unknown-linux-gnu
+rustup target add x86_64-unknown-linux-gnu
+
+# Windows rustup targets
+rustup target add i686-pc-windows-gnu
+rustup target add x86_64-pc-windows-gn
+```
 
 To build one of these targets use `cargo make -p $target build`
 
@@ -50,7 +75,6 @@ Following is the current output of `cargo make -p x86_64-linux run`:
 ## Problem #1 - `format!` macro e.g. `&'static &str`
 
 Using the `alloc::fmt::format!` macro will result in a segementation fault due to absolute addresses to reference the `pieces` in `Arguments { pieces, fmt: None, args }`.
-
 
 This results in the `if !piece.is_empty()` check failing within the following code
 @ [https://github.com/rust-lang/rust/blob/master/library/core/src/fmt/mod.rs](https://github.com/rust-lang/rust/blob/150247c338a54cb3d08614d8530d1bb491fa90db/library/core/src/fmt/mod.rs#L1172C1-L1190C10):
@@ -88,6 +112,7 @@ This leads to a call being made to `_gcc_except_table` which has been removed by
 ## (Solved) Problem #2 - Global Offset Table (GOT)
 
 A bunch of stuff uses the GOT including calls to functions with the `compiler_builtins` crate, e.g. the following functions:
+
 - `memcpy`
 - `memmove`
 - `memset`
@@ -97,7 +122,6 @@ A bunch of stuff uses the GOT including calls to functions with the `compiler_bu
 This resulted in a segmentation fault due to a `call` made to a bad/absolute hard-coded memory address stored within the GOT and then referenced by a RIP-relative offset.
 
 Similarly using `extern "C"` functions directly may result in the use the GOT.
-
 
 The following code was used to ensure `memcpy` was required by the binary:
 
@@ -112,6 +136,7 @@ Patching the hardcoded addresses with GDB results in a successful execution as s
 ![Patching `memcpy` address in GOT with GDB](./docs/patching-memcpy-addr.png)
 
 **Solution**:
+
 - Patch the GOT dynamically during runtime, this appears to allow the use of `compiler_builtins`!
 - Don't directly call `extern` functions before patching, call them within `asm!` macro
 
@@ -120,7 +145,10 @@ Patching the hardcoded addresses with GDB results in a successful execution as s
 You're best off reading this (or maybe you're not, won't get that time back) [`i686-w64-mingw32-gcc` and relative data addressing (PIC)](https://users.rust-lang.org/t/i686-w64-mingw32-gcc-and-relative-data-addressing-pic/122399/9).
 
 **Solution**:
+
 - Compile an i686 elf
 - Patch the GOT dynamically during runtime
 - Specify `stdcall` where required.
 - _"It's all just machine code in the end"_ - Me while justifying this mess
+
+The short summary is that, in Rust, the compiler emits GOT references implicitly for static data and `compiler_builtins` — you cannot opt out without either going fully GOT-free (no statics, no compiler_builtins functions). In this case fighting the compiler's codegen is harder than patching the GOT at runtime.
