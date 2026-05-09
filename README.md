@@ -51,6 +51,12 @@ rustup target add i686-pc-windows-gnu
 rustup target add x86_64-pc-windows-gn
 ```
 
+Or you can build in the provided docker environment:
+
+```sh
+docker run --rm -it -v .:/build stardust-rs bash
+```
+
 To build one of these targets use `cargo make -p $target build`
 
 Following is the current output of `cargo make -p x86_64-linux run`:
