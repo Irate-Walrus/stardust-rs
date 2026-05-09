@@ -20,7 +20,7 @@ pub fn log_str(s: &str) {
         buf.push(0); // Add null terminator
         unsafe {
             let mut bytes_written: u32 = 0;
-            (instance.kernel32.write_file)(
+            instance.kernel32.write_file()(
                 -11i32 as u32 as *mut c_void,
                 s.as_ptr() as *const c_void,
                 s.len() as u32,
@@ -59,64 +59,57 @@ pub unsafe fn initialize() {
         local_inst.kernel32.base_addr,
         djb2_hash!(b"OutputDebugStringA"),
     );
-    local_inst.kernel32.output_debug_string_a = core::mem::transmute(output_debug_string_a_addr);
+    local_inst.kernel32.output_debug_string_a = output_debug_string_a_addr;
 
     let output_debug_string_w_addr = resolve_function(
         local_inst.kernel32.base_addr,
         djb2_hash!(b"OutputDebugStringW"),
     );
-    local_inst.kernel32.output_debug_string_w = core::mem::transmute(output_debug_string_w_addr);
+    local_inst.kernel32.output_debug_string_w = output_debug_string_w_addr;
 
     let write_file_addr = resolve_function(local_inst.kernel32.base_addr, djb2_hash!(b"WriteFile"));
-    local_inst.kernel32.write_file = core::mem::transmute(write_file_addr);
+    local_inst.kernel32.write_file = write_file_addr;
 
     // Load the base address of ntdll.dll.
     local_inst.ntdll.base_addr = resolve_module(djb2_hash!(b"ntdll.dll"));
 
     // Resolve RtlCreateHeap
-    let rtl_create_heap_addr =
+    local_inst.ntdll.rtl_create_heap =
         resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlCreateHeap"));
-    local_inst.ntdll.rtl_create_heap = core::mem::transmute(rtl_create_heap_addr);
 
     // Resolve RtlAllocateHeap
-    let rtl_allocate_heap_addr =
+    local_inst.ntdll.rtl_allocate_heap =
         resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlAllocateHeap"));
-    local_inst.ntdll.rtl_allocate_heap = core::mem::transmute(rtl_allocate_heap_addr);
 
     // Resolve RtlFreeHeap
-    let rtl_free_heap_addr =
+    local_inst.ntdll.rtl_free_heap =
         resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlFreeHeap"));
-    local_inst.ntdll.rtl_free_heap = core::mem::transmute(rtl_free_heap_addr);
 
     // Resolve RtlReAllocateHeap
-    let rtl_reallocate_heap_addr =
+    local_inst.ntdll.rtl_re_allocate_heap =
         resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlReAllocateHeap"));
-    local_inst.ntdll.rtl_re_allocate_heap = core::mem::transmute(rtl_reallocate_heap_addr);
 
     // Resolve RtlDestroyHeap
-    let rtl_destroy_heap_addr =
+    local_inst.ntdll.rtl_destroy_heap =
         resolve_function(local_inst.ntdll.base_addr, djb2_hash!(b"RtlDestroyHeap"));
-    local_inst.ntdll.rtl_destroy_heap = core::mem::transmute(rtl_destroy_heap_addr);
 
     // Resolve NtTerminateProcess
-    let nt_terminate_process_addr = resolve_function(
+    local_inst.ntdll.nt_terminate_process = resolve_function(
         local_inst.ntdll.base_addr,
         djb2_hash!(b"NtTerminateProcess"),
     );
-    local_inst.ntdll.nt_terminate_process = core::mem::transmute(nt_terminate_process_addr);
 
     // Resolve NtProtectVirtualMemory
-    let nt_terminate_process_addr = resolve_function(
+    local_inst.ntdll.nt_protect_virtual_memory = resolve_function(
         local_inst.ntdll.base_addr,
         djb2_hash!(b"NtProtectVirtualMemory"),
     );
-    local_inst.ntdll.nt_protect_virtual_memory = core::mem::transmute(nt_terminate_process_addr);
 
     let mut ptr = local_inst.base.ptr.byte_add(data_offset()) as *mut c_void;
 
     let mut size = size_of::<usize>() as _;
     let mut protect = 0x0;
-    (local_inst.ntdll.nt_protect_virtual_memory)(
+    local_inst.ntdll.nt_protect_virtual_memory()(
         usize::MAX as *mut c_void, // HANDLE-1 OR NtCurrentProcess()
         &mut ptr,
         &mut size, // will round up to full page

@@ -1,21 +1,30 @@
 use core::ffi::c_void;
-use core::ptr::null_mut;
 
 pub struct Kernel32 {
     pub base_addr: *mut c_void,
-    pub output_debug_string_a: OutputDebugStringA,
-    pub output_debug_string_w: OutputDebugStringW,
-    pub write_file: WriteFile,
+    pub output_debug_string_a: *mut c_void,
+    pub output_debug_string_w: *mut c_void,
+    pub write_file: *mut c_void,
 }
 
 impl Kernel32 {
     pub fn new() -> Self {
-        Kernel32 {
-            base_addr: null_mut(),
-            output_debug_string_a: unsafe { core::mem::transmute(null_mut::<c_void>()) },
-            output_debug_string_w: unsafe { core::mem::transmute(null_mut::<c_void>()) },
-            write_file: unsafe { core::mem::transmute(null_mut::<c_void>()) },
-        }
+        unsafe { core::mem::zeroed() }
+    }
+
+    #[inline(always)]
+    pub unsafe fn output_debug_string_a(&self) -> OutputDebugStringA {
+        core::mem::transmute(self.output_debug_string_a)
+    }
+
+    #[inline(always)]
+    pub unsafe fn output_debug_string_w(&self) -> OutputDebugStringW {
+        core::mem::transmute(self.output_debug_string_w)
+    }
+
+    #[inline(always)]
+    pub unsafe fn write_file(&self) -> WriteFile {
+        core::mem::transmute(self.write_file)
     }
 }
 

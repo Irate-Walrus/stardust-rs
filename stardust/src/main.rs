@@ -66,7 +66,5 @@ pub extern "C" fn _stmain() {
     */
 
     info!("Hitting Breakpoint!");
-    unsafe {
-        intrinsics::breakpoint();
-    }
+    intrinsics::breakpoint();
 }
