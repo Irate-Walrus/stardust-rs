@@ -9,7 +9,7 @@ CARGO_MAKE_DEFAULT_PROFILE = "x86_64-linux"
 IMPLANT_EXT = ""
 IMPLANT_TARGET = "x86_64-unknown-linux-gnu"
 IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
-FEATURES = "--features linux"
+CARGO_OPTIONS = "--features linux"
 RUNNER_TARGET = "${IMPLANT_TARGET}"
 RUNNER_EXT = ""
 
@@ -17,7 +17,7 @@ RUNNER_EXT = ""
 IMPLANT_TARGET = "i686-unknown-linux-gnu"
 IMPLANT_EXT = ""
 IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
-FEATURES = "--features linux"
+CARGO_OPTIONS = "--features linux"
 RUNNER_TARGET = "${IMPLANT_TARGET}"
 RUNNER_EXT = ""
 
@@ -40,15 +40,15 @@ RUSTFLAGS="
 
 echo $RUSTFLAGS
 """] }
-FEATURES = "--features windows"
+CARGO_OPTIONS = "--features windows"
 RUNNER_TARGET = "${IMPLANT_TARGET}"
 RUNNER_EXT = ".exe"
 
 [env.i686-windows]
 EXT = ""
-IMPLANT_TARGET = "i686-unknown-none.json"
-IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Z fmt-debug=none"
-FEATURES = "--features windows"
+IMPLANT_TARGET = "./i686-unknown-none.json"
+IMPLANT_RUSTFLAGS = "-C link-arg=-Wl,--verbose -C relocation-model=pic -C link-arg=-T./stardust/scripts/linux.ld -Zfmt-debug=none"
+CARGO_OPTIONS = "--features windows -Zjson-target-spec"
 RUNNER_TARGET = "i686-pc-windows-gnu"
 RUNNER_EXT = ".exe"
 
@@ -71,7 +71,7 @@ script = '''
 #!/usr/bin/env bash
 
 export RUSTFLAGS=$IMPLANT_RUSTFLAGS
-cargo build ${FEATURES} -Zbuild-std=core,alloc -Zbuild-std-features=compiler-builtins-mem --package=stardust --release --target ${IMPLANT_TARGET}
+cargo build ${CARGO_OPTIONS} -Zbuild-std=core,alloc -Zbuild-std-features=compiler-builtins-mem --package=stardust --release --target ${IMPLANT_TARGET}
 '''
 
 [tasks.build-runner]
